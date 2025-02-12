@@ -1,7 +1,7 @@
 
 body {
     font-family: Arial, sans-serif;
-    background-color: #6B8E23; /* Verde oliva */
+    background: linear-gradient(90deg, rgb(12, 66, 2) 0%, rgb(46, 107, 3) 67%, rgba(0,196,54,1) 100%);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -60,3 +60,20 @@ body {
 .login-container a:hover {
     text-decoration: underline;
 }
+
+.dashboard-content{
+    margin: 50px;
+    padding: 50px;
+    width: 500px;
+    background: rgb(0,190,96);
+    /* background: linear-gradient(90deg, rgba(0,190,96,1) 0%, rgba(0,148,6,1) 67%, rgba(17,51,0,1) 100%); */
+
+}
+
+
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+    padding: auto;
+    margin: auto;
+  } 
