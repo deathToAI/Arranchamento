@@ -21,15 +21,15 @@
         // Captura o formulário de login
         const loginForm = document.getElementById('loginForm');
         const message = document.getElementById('message');
-
+    
         // Adiciona um listener para o evento de submit do formulário
         loginForm.addEventListener('submit', async (event) => {
             event.preventDefault(); // Impede o comportamento padrão de recarregar a página
-
+    
             // Obtém os valores dos campos de usuário e senha
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-
+    
             try {
                 // Faz uma requisição POST para a rota /login
                 const response = await fetch('/login', {
@@ -39,15 +39,14 @@
                     },
                     body: JSON.stringify({ username, password }), // Envia os dados como JSON
                 });
-
+    
                 const data = await response.json(); // Converte a resposta para JSON
-
+                  
                 if (response.ok) {
                     // Se o login for bem-sucedido, exibe uma mensagem de sucesso
                     message.textContent = data.message;
                     message.style.color = 'green';
-                    // Redireciona para outra página (opcional)
-                    // window.location.href = '/dashboard';
+                    window.location.href = '/dashboard';
                 } else {
                     // Se houver erro, exibe a mensagem de erro
                     message.textContent = data.error;
@@ -57,6 +56,7 @@
                 // Se ocorrer um erro na requisição, exibe uma mensagem de erro
                 message.textContent = 'Erro ao conectar ao servidor';
                 message.style.color = 'red';
+                console.error(error); // Mostra o erro real no console
             }
         });
     </script>

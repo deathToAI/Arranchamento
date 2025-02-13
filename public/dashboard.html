@@ -9,17 +9,27 @@
 <body>
 <!-- <h1>Sistema de arranchamento 3ª Cia Com Bld</h1><br><br> -->
 <div class = "dashboard-content">
-    <h2> Selecione os dias que deseja se arranchar:</h2>
+    <h2 id="welcome-message">Carregando...</h2>
+    <h3> Selecione os dias que deseja se arranchar:</h3>
     <div alignment="center"> 
         <table id="tabela" border="1" ></table>
         
     </div>
     
 </div>
-<script  src="../tabelas.js" defer>
-
-
+<script  src="tabelas.js" defer>
 </script>
-
+<script>
+    // Carregar o nome do usuário ao acessar o dashboard
+    fetch('/dashboard-data')
+        .then(response => response.json())
+        .then(data => {
+            const welcomeMessage = document.getElementById('welcome-message');
+            welcomeMessage.textContent = `Bem-vindo, ${data.username}!`;
+        })
+        .catch(error => {
+            console.error('Erro ao carregar dados do dashboard:', error);
+        });
+</script>
 
 </body>
