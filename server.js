@@ -12,8 +12,10 @@ app.use(express.json()); // Middleware para parsear JSON
 app.use(cookieParser()); // Habilita o uso de cookies
 port = 3000 ; 
 
-sequelize.sync().then(() => {
-	console.log('Banco de Dados sincronizado');
+sequelize.sync({ alter: true }).then(() => {
+    console.log('Banco de Dados atualizado com sucesso!');
+}).catch((error) => {
+    console.error('Erro ao atualizar o banco de dados:', error);
 });
 
 // Middleware para verificar o token JWT
@@ -122,13 +124,54 @@ app.get('/dashboard-data', verifyToken, async (req, res) => {
         }
 
         res.json({
-            username: user.username
+            username: user.nome_pg,
+			user_id: user.id
         });
     } catch (error) {
         console.error('Erro ao carregar dados do dashboard:', error);
         res.status(500).json({ error: 'Erro interno do servidor' });
     }
 });
+
+// Rota para salvar as seleções do usuário no banco de dados
+app.post('/api/salvar-selecoes', verifyToken, async (req, res) => {
+    try {
+        const { user_id, selecoes } = req.body;
+
+        if (!user_id || !Array.isArray(selecoes)) {
+            return res.status(400).json({ error: 'Dados inválidos' });
+        }
+
+        // Para cada refeição selecionada
+        for (let selecao of selecoes) {
+            const { dia, tipo_refeicao } = selecao;
+
+            // Excluir as refeições anteriores para o dia e usuário (caso já existam)
+            await Meal.destroy({
+                where: {
+                    user_id: user_id,
+                    dia: dia
+                }
+            });
+
+            // Adicionar as novas seleções no banco de dados
+            for (let tipo of tipo_refeicao) {
+                await Meal.create({
+                    user_id: user_id,
+                    dia: dia,
+                    tipo_refeicao: tipo
+                });
+            }
+        }
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Erro ao salvar seleções:', error);
+        res.status(500).json({ error: 'Erro ao salvar seleções no banco de dados' });
+    }
+});
+
+
 
 
 app.listen(port, () => {

@@ -7,18 +7,20 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<!-- <h1>Sistema de arranchamento 3ª Cia Com Bld</h1><br><br> -->
+<h1>Sistema de arranchamento 3ª Cia Com Bld</h1><br><br> 
 <div class = "dashboard-content">
     <h2 id="welcome-message">Carregando...</h2>
     <h3> Selecione os dias que deseja se arranchar:</h3>
-    <div alignment="center"> 
+    <div> 
         <table id="tabela" border="1" ></table>
-        
+        <br>
+        <br>
+        <button id="arrancho-button" type="button">Arranchar</button>
     </div>
     
 </div>
-<script  src="tabelas.js" defer>
-</script>
+<script src="tabelas.js" defer></script>
+<script src="arranchamento.js" defer></script>
 <script>
     // Carregar o nome do usuário ao acessar o dashboard
     fetch('/dashboard-data')
@@ -26,6 +28,11 @@
         .then(data => {
             const welcomeMessage = document.getElementById('welcome-message');
             welcomeMessage.textContent = `Bem-vindo, ${data.username}!`;
+            // Armazenar o ID do usuário para usá-lo no arranchamento
+            const usuarioId = data.user_id;
+            document.getElementById('arrancho-button').addEventListener('click', function() {
+                enviarSelecoes(usuarioId); // Envia o ID do usuário com as seleções
+            });
         })
         .catch(error => {
             console.error('Erro ao carregar dados do dashboard:', error);

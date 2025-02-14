@@ -16,6 +16,11 @@ const User = sequelize.define('User', {
   password: {
     type: DataTypes.STRING,
     allowNull: false
+  },
+  nome_pg:{
+    type: DataTypes.STRING,
+    allowNull : true,
+    unique: false
   }
 }, {
   hooks: {

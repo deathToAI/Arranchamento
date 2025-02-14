@@ -53,6 +53,7 @@ function gerarTabela(){
             const td = document.createElement("td"); //Cria um table data e armazena na variavel td
             const checkbox = document.createElement("input"); // cria um input chamado checkbox
             checkbox.type = "checkbox"; // muda o tipo de input para checkbox
+            checkbox.style.margin = "0 auto";
             td.appendChild(checkbox); // coloca a checkbox na tabela
             tr.appendChild(td);
         }

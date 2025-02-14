@@ -1,12 +1,15 @@
-
 body {
     font-family: Arial, sans-serif;
     background: linear-gradient(90deg, rgb(12, 66, 2) 0%, rgb(46, 107, 3) 67%, rgba(0,196,54,1) 100%);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
     margin: 0;
+    text-align: center;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+h1 {
+    margin: 20px 0;
 }
 
 .login-container {
@@ -76,4 +79,23 @@ table, th, td {
     border-collapse: collapse;
     padding: auto;
     margin: auto;
+    text-align: center;
   } 
+
+  #arrancho-button {
+    color: white;
+    background-color: #6B8E23;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    float: right;
+}
+
+#arrancho-button:hover {
+    background-color: #5A7C1B;
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+    transform: translateY(-3px);
+}
