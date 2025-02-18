@@ -122,10 +122,15 @@ app.get('/dashboard-data', verifyToken, async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: 'Usuário não encontrado' });
         }
+	const selecoes = user.meals.map(meal => ({
+		dia: meal.dia,
+		tipo_refeicao: meal.tipo_refeicao
+	}));
 
         res.json({
             username: user.nome_pg,
-			user_id: user.id
+	    user_id: user.id,
+	    selecoes : selecoes	
         });
     } catch (error) {
         console.error('Erro ao carregar dados do dashboard:', error);
