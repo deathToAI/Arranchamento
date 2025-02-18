@@ -15,18 +15,17 @@ const Meal = sequelize.define('Meal', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'Users',
+      model: 'users',
       key: 'id'
     }
   },
   tipo_refeicao: {
-    type: DataTypes.STRING(10),
+    type: DataTypes.STRING,
     allowNull: false
-  },
-  created_at: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW
-  }
+    }
+}, {
+    timestamps: false //Impede que Sequelize tente usar `createdAt` e `updatedAt`
 });
+
 
 module.exports = Meal;

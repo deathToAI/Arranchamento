@@ -2,15 +2,17 @@ require('dotenv').config({path:__dirname+'/sec.env'});
 const express = require('express')
 const sequelize = require('./database/database')
 const User = require('./database/Users')
+const Meals = require ('./database/meals')
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken'); 
 const cookieParser = require('cookie-parser');
-
+const moment = require('moment');
 const app = express();
-app.use(express.static("public"));
+app.use(express.static('public'));
 app.use(express.json()); // Middleware para parsear JSON
 app.use(cookieParser()); // Habilita o uso de cookies
 port = 3000 ; 
+
 
 sequelize.sync({ alter: true }).then(() => {
     console.log('Banco de Dados atualizado com sucesso!');
@@ -116,21 +118,25 @@ app.get('/dashboard-data', verifyToken, async (req, res) => {
             return res.status(401).json({ error: 'Token não encontrado' });
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+		const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const user = await User.findByPk(decoded.id);
-
+		
+		const refeicoes = await Meals.findAll({
+			where: {
+				user_id: user.id
+			},
+			attributes : [ 'dia', 'tipo_refeicao'],
+			//order : [['dia', 'ASC']]
+		});
+		console.log(refeicoes);
+		
         if (!user) {
             return res.status(404).json({ error: 'Usuário não encontrado' });
         }
-	const selecoes = user.meals.map(meal => ({
-		dia: meal.dia,
-		tipo_refeicao: meal.tipo_refeicao
-	}));
 
         res.json({
             username: user.nome_pg,
-	    user_id: user.id,
-	    selecoes : selecoes	
+			user_id: user.id,
         });
     } catch (error) {
         console.error('Erro ao carregar dados do dashboard:', error);
@@ -138,44 +144,147 @@ app.get('/dashboard-data', verifyToken, async (req, res) => {
     }
 });
 
-// Rota para salvar as seleções do usuário no banco de dados
-app.post('/api/salvar-selecoes', verifyToken, async (req, res) => {
+app.post('/salvar-selecoes', async (req, res) => {
+    const { user_id, refeicoes } = req.body;
+
+    if (!user_id || !Array.isArray(refeicoes)) {
+        return res.status(400).json({ error: "Dados inválidos. Envie `user_id` e `refeicoes` corretamente." });
+    }
+
     try {
-        const { user_id, selecoes } = req.body;
+        console.log("Refeições recebidas para salvar:", refeicoes);
 
-        if (!user_id || !Array.isArray(selecoes)) {
-            return res.status(400).json({ error: 'Dados inválidos' });
-        }
+        // Obtém todas as refeições já existentes do usuário no banco de dados
+        const refeicoesExistentes = await Meals.findAll({
+            where: { user_id },
+            attributes: ['dia', 'tipo_refeicao']
+        });
 
-        // Para cada refeição selecionada
-        for (let selecao of selecoes) {
-            const { dia, tipo_refeicao } = selecao;
+        // Converte as refeições existentes em um formato de fácil comparação
+        const refeicoesNoBanco = refeicoesExistentes.map(r => ({
+            dia: moment(r.dia, "YYYY-MM-DD").format("DD/MM/YYYY"),
+            tipo_refeicao: r.tipo_refeicao
+        }));
 
-            // Excluir as refeições anteriores para o dia e usuário (caso já existam)
-            await Meal.destroy({
+        console.log("Refeições já cadastradas no banco:", refeicoesNoBanco);
+
+        // Refeições que o usuário selecionou no frontend
+        const refeicoesSelecionadas = refeicoes.flatMap(refeicao =>
+            refeicao.tipo_refeicao.map(tipo => ({
+                user_id: user_id,
+                dia: moment(refeicao.dia, "DD/MM/YYYY").format("YYYY-MM-DD"),
+                tipo_refeicao: tipo
+            }))
+        );
+
+        console.log("Refeições processadas a serem mantidas:", refeicoesSelecionadas);
+
+        // Identifica quais refeições foram desmarcadas (estavam no banco, mas não estão no frontend)
+        const refeicoesParaRemover = refeicoesNoBanco.filter(refNoBanco =>
+            !refeicoesSelecionadas.some(refNova =>
+                refNoBanco.dia === refNova.dia && refNoBanco.tipo_refeicao === refNova.tipo_refeicao
+            )
+        );
+
+        console.log("Refeições a serem removidas:", refeicoesParaRemover);
+
+        // Remove as refeições desmarcadas do banco de dados
+        for (const refeicao of refeicoesParaRemover) {
+            await Meals.destroy({
                 where: {
                     user_id: user_id,
-                    dia: dia
+                    dia: moment(refeicao.dia, "DD/MM/YYYY").format("YYYY-MM-DD"),
+                    tipo_refeicao: refeicao.tipo_refeicao
                 }
             });
-
-            // Adicionar as novas seleções no banco de dados
-            for (let tipo of tipo_refeicao) {
-                await Meal.create({
-                    user_id: user_id,
-                    dia: dia,
-                    tipo_refeicao: tipo
-                });
-            }
         }
 
-        res.json({ success: true });
+        // Insere ou atualiza as refeições selecionadas pelo usuário
+        for (const refeicao of refeicoesSelecionadas) {
+            await Meals.findOrCreate({
+                where: {
+                    user_id: refeicao.user_id,
+                    dia: refeicao.dia,
+                    tipo_refeicao: refeicao.tipo_refeicao
+                },
+                defaults: refeicao
+            });
+        }
+
+        console.log("Refeições atualizadas com sucesso.");
+        res.json({ message: "Refeições registradas com sucesso!" });
+
     } catch (error) {
-        console.error('Erro ao salvar seleções:', error);
-        res.status(500).json({ error: 'Erro ao salvar seleções no banco de dados' });
+        console.error("Erro ao salvar refeições:", error);
+        res.status(500).json({ error: "Erro ao salvar refeições", details: error.message });
     }
 });
 
+app.get('/refeicoes-usuario', async (req, res) => {
+    const { user_id } = req.query;
+
+    if (!user_id) {
+        return res.status(400).json({ error: "O parâmetro `user_id` é obrigatório." });
+    }
+
+    try {
+
+		const usuario = await User.findByPk(user_id, { attributes: ['username'] });
+        // Busca todas as refeições do usuário
+        const refeicoes = await Meals.findAll({
+            where: { user_id },
+            attributes: ['dia', 'tipo_refeicao']
+        });
+
+        const refeicoesFormatadas = refeicoes.reduce((acc, refeicao) => {
+            const diaFormatado = moment(refeicao.dia, "YYYY-MM-DD").format("DD/MM/YYYY"); // Converte para o formato correto
+
+            if (!acc[diaFormatado]) {
+                acc[diaFormatado] = [];
+            }
+            acc[diaFormatado].push(refeicao.tipo_refeicao);
+            return acc;
+        }, {});
+
+        res.json({
+            refeicoesFormatadas: refeicoesFormatadas,
+            usuario: usuario ? usuario.username : null
+        });
+    } catch (error) {
+        console.error("Erro ao buscar refeições do usuário:", error);
+        res.status(500).json({ error: "Erro ao buscar refeições", details: error.message });
+    }
+});
+
+
+
+
+// Rota para obter seleções de refeições de um usuário
+app.get('/get-selecoes', async (req, res) => {
+    const userId = req.query.user_id; // Obter o ID do usuário da query string
+
+    if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    try {
+        // Buscar as seleções do usuário no banco de dados
+        const selecoes = await Meals.findAll({
+            where: { user_id: userId },
+        });
+
+        // Retornar as seleções em formato JSON
+        const selecoesFormatted = selecoes.map(selecao => ({
+            dia: selecao.dia,
+            tipo_refeicao: selecao.tipo_refeicao.split(','), // Caso seja uma string separada por vírgulas
+        }));
+
+        return res.json(selecoesFormatted);
+    } catch (error) {
+        console.error('Erro ao obter seleções:', error);
+        //return res.status(500).json([]); // Retorna array vazio no erro
+    }
+});
 
 
 

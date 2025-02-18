@@ -2,7 +2,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('./database');
 const bcrypt = require('bcryptjs');
 
-const User = sequelize.define('User', {
+const user = sequelize.define('user', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -11,7 +11,10 @@ const User = sequelize.define('User', {
   username: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true
+    unique: true,
+    vaidate:{
+      is: /^[a-zA-Z0-9_]+$/ //só permite letras, números e _
+    }
   },
   password: {
     type: DataTypes.STRING,
@@ -23,12 +26,21 @@ const User = sequelize.define('User', {
     unique: false
   }
 }, {
+    timestamps: false // Impede que Sequelize tente usar `createdAt` e `updatedAt`
+});
+{
   hooks: {
     beforeCreate: async (user) => {
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(user.password, salt);
     }
-  }
-});
+  }};
 
-module.exports = User;
+user.associate = (models) => {
+  user.hasMany(models.Meal, {
+    foreignKey: 'user_id',
+    onDelete: 'CASCADE' // Opcional: deleta refeições se usuário for removido
+  });
+};
+
+module.exports = user;

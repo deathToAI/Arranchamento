@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arranchamento - Login</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="arranchamento.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const userId = 1; // Pegue o ID do usuário autenticado dinamicamente
+            obterSelecoes(userId);
+        });
+    </script>
 </head>
 <body>
 <h1>Sistema de arranchamento 3ª Cia Com Bld</h1><br><br> 
@@ -15,12 +22,14 @@
         <table id="tabela" border="1" ></table>
         <br>
         <br>
-        <button id="arrancho-button" type="button">Arranchar</button>
+        <button id="salvarSelecoes" type="button" >Arranchar</button>
+        <button id="obterSelecoes" type="button" >Obter Seleções</button>
+        <button id="querySelection" type="button" >querySelection</button>
+
     </div>
     
 </div>
 <script src="tabelas.js" defer></script>
-<script src="arranchamento.js"></script>
 <script>
     // Carregar o nome do usuário ao acessar o dashboard
     fetch('/dashboard-data')
@@ -30,10 +39,17 @@
             welcomeMessage.textContent = `Bem-vindo, ${data.username}!`;
             // Armazenar o ID do usuário para usá-lo no arranchamento
             const usuarioId = data.user_id;
-            document.getElementById('arrancho-button').addEventListener('click', function() {
-                enviarSelecoes(usuarioId); // Envia o ID do usuário com as seleções
+
+            // Vincular os eventos aos botões
+            document.getElementById('salvarSelecoes').addEventListener('click', function() {
+                salvarSelecoes(usuarioId); // Envia o ID do usuário com as seleções
+            });
+
+            document.getElementById('obterSelecoes').addEventListener('click', function() {
+                obterSelecoes(usuarioId); // Função para obter as seleções do usuário
             });
         })
+
         .catch(error => {
             console.error('Erro ao carregar dados do dashboard:', error);
         });
