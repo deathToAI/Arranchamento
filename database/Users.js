@@ -39,6 +39,7 @@ const user = sequelize.define('user', {
 user.associate = (models) => {
   user.hasMany(models.Meal, {
     foreignKey: 'user_id',
+    as: "refeicoes",
     onDelete: 'CASCADE' // Opcional: deleta refeições se usuário for removido
   });
 };

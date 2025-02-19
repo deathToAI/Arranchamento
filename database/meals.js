@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('./database');
+const User = require('./Users')
 
 const Meal = sequelize.define('Meal', {
   id: {
@@ -26,6 +27,6 @@ const Meal = sequelize.define('Meal', {
 }, {
     timestamps: false //Impede que Sequelize tente usar `createdAt` e `updatedAt`
 });
-
+Meal.belongsTo(User, { foreignKey: "user_id", as: "usuario" });
 
 module.exports = Meal;

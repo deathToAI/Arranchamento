@@ -46,8 +46,6 @@ function obterSelecoes(user_id) {
 }
 
 
-
-
 // Função para salvar as seleções no banco de dados quando o botão é clicado
 function salvarSelecoes(user_id) {
     const tabela = document.getElementById("tabela");
@@ -94,4 +92,3 @@ function salvarSelecoes(user_id) {
     })
     .catch(error => console.error("Erro ao salvar seleções:", error));
 }
-

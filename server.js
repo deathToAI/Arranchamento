@@ -9,6 +9,9 @@ const cookieParser = require('cookie-parser');
 const moment = require('moment');
 const app = express();
 app.use(express.static('public'));
+app.set('view engine', 'ejs');
+const path = require('path');
+app.set('views', path.join(__dirname, 'public'));
 app.use(express.json()); // Middleware para parsear JSON
 app.use(cookieParser()); // Habilita o uso de cookies
 port = 3000 ; 
@@ -253,6 +256,54 @@ app.get('/refeicoes-usuario', async (req, res) => {
     } catch (error) {
         console.error("Erro ao buscar refeições do usuário:", error);
         res.status(500).json({ error: "Erro ao buscar refeições", details: error.message });
+    }
+});
+
+app.get ('/furriel_dashboard', async (req,res) =>{
+
+    try{
+        const usuarios = await User.findAll({
+            attributes: ['nome_pg']
+        });
+        usuarios.forEach(usuario => console.log(usuario.nome_pg));
+        res.render('furriel_dashboard', {usuarios});
+    } catch (error) {
+        console.error("Erro ao buscar usuários:", error);
+        res.status(500).send("Erro interno ao carregar usuários");
+    }
+});
+
+
+app.get('/usuarios-por-refeicao', async (req, res) => {
+    const { data, refeicao } = req.query;
+
+    if (!data || !refeicao) {
+        return res.status(400).json({ error: "Os parâmetros `data` e `refeicao` são obrigatórios." });
+    }
+
+    try {
+        const dataFormatada = moment(data, "DD/MM/YYYY").format("YYYY-MM-DD");
+
+        // Busca usuários que têm essa refeição registrada no dia específico
+        const usuarios = await User.findAll({
+            attributes: ['nome_pg', 'id'],
+            include: [{
+                model: Meals, // Certifique-se de que está usando o nome correto do modelo
+                as: "refeicoes", //  Certifique-se de que o alias corresponde ao definido na associação
+                required: true,
+                where: {
+                    dia: dataFormatada,
+                    tipo_refeicao: refeicao.toLowerCase() // Certifique-se de que está filtrando corretamente
+                }
+            }]
+        });
+
+        console.log(`Usuários que marcaram ${refeicao} em ${data}:`, usuarios.map(u => u.nome_pg));
+
+        res.json({ usuarios: usuarios.map(user => user.nome_pg) });
+    } catch (error) {
+        console.error("Erro ao buscar usuários por refeição:", error);
+        res.status(500).json({ error: "Erro ao buscar usuários", details: error.message });
     }
 });
 

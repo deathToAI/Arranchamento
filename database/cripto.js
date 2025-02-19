@@ -1,8 +1,16 @@
 const bcrypt = require('bcryptjs');
-const senha = 'camole'; // Senha do usuário
-const saltRounds = 10; // Número de rounds para gerar o salt
+
+// Pega a senha passada como argumento
+const senha = process.argv[2];
+
+if (!senha) {
+    console.error('Uso: node cripto.js <senha>');
+    process.exit(1);
+}
+
+const saltRounds = 10;
 
 bcrypt.hash(senha, saltRounds, (err, hash) => {
     if (err) throw err;
-    console.log('Senha criptografada:', hash);
+    console.log(hash);
 });

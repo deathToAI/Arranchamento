@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arranchamento - Furriel</title>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        function gerarListaDeDatas() {
+            const datas = [];
+            const hoje = new Date();
+            hoje.setDate(hoje.getDate() + 2);
+
+            for (let i = 0; i < 8; i++) {
+                const dia = String(hoje.getDate()).padStart(2, '0');
+                const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+                const ano = hoje.getFullYear();
+                datas.push(`${dia}/${mes}/${ano}`);
+                hoje.setDate(hoje.getDate() + 1);
+            }
+            return datas;
+        }
+
+        function preencherDropdowns() {
+            const dias = gerarListaDeDatas();
+            const refeicoes = ['Cafe', 'Almoco', 'Janta'];
+
+            const dataDropdown = document.getElementById("data-dropdown");
+            dias.forEach(data => {
+                let option = document.createElement("option");
+                option.value = data;
+                option.textContent = data;
+                dataDropdown.appendChild(option);
+            });
+
+            const refeicaoDropdown = document.getElementById("refeicao-dropdown");
+            refeicoes.forEach(refeicao => {
+                let option = document.createElement("option");
+                option.value = refeicao.toLowerCase(); // Em minúsculas para corresponder ao banco
+                option.textContent = refeicao;
+                refeicaoDropdown.appendChild(option);
+            });
+        }
+        
+
+        function buscarUsuariosPorRefeicao() {
+            const dataSelecionada = document.getElementById("data-dropdown").value;
+            const refeicaoSelecionada = document.getElementById("refeicao-dropdown").value;
+            document.getElementById("header-refeicao").textContent = refeicaoSelecionada.toUpperCase();
+            console.log("A refeição é :",refeicaoSelecionada);
+
+            // fetch(`/usuarios-por-refeicao?data=${dataSelecionada}&refeicao=${refeicaoSelecionada}`)
+            //     .then(response => response.json())
+            //     .then(data => {
+            //         console.log(`Usuários com ${refeicaoSelecionada} no dia ${dataSelecionada}:`, data);
+
+            //     })
+            //     .catch(error => console.error("Erro ao carregar usuários por refeição:", error));
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            preencherDropdowns();
+            document.getElementById("header-refeicao").textContent = document.getElementById("refeicao-dropdown").value.toUpperCase();
+            document.getElementById("data-dropdown").addEventListener("change", buscarUsuariosPorRefeicao);
+            document.getElementById("refeicao-dropdown").addEventListener("change", buscarUsuariosPorRefeicao);
+        });
+        
+
+    </script>
+
+</head>
+<body>
+    <h1>Sistema de arranchamento 3ª Cia Com Bld - Perfil de Furriel</h1><br><br> 
+
+    <div class="dashboard-content">
+        <h2 id="welcome-message">Bem-vindo Furriel!</h2>
+
+        <label for="data-dropdown">Selecione a data:</label>
+        <select id="data-dropdown"></select>
+        
+        <label for="refeicao-dropdown">Selecione a refeição:</label>
+        <select id="refeicao-dropdown"></select>
+
+        <h3>Lista de Usuários</h3>
+
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Nome de Usuário</th>
+                    <th id="header-refeicao"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <% usuarios.forEach(usuario => { %>
+                    <tr>
+                        <td><%= usuario.nome_pg %></td>
+                        <td class="status-presenca" data-usuario="<%= usuario.nome_pg %>">
+                            <span class="refeicao-nome">Café</span> <!-- O nome será atualizado via JS -->
+                            <input type="checkbox">
+                        </td>                        
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+
+        <br>
+        <button id="salvarSelecoes" type="button">Salvar</button>
+    </div>
+</body>
+</html>
