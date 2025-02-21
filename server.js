@@ -11,6 +11,7 @@ const app = express();
 app.use(express.static('public'));
 app.set('view engine', 'ejs');
 const path = require('path');
+const { where } = require('sequelize');
 app.set('views', path.join(__dirname, 'public'));
 app.use(express.json()); // Middleware para parsear JSON
 app.use(cookieParser()); // Habilita o uso de cookies
@@ -265,50 +266,52 @@ app.get ('/furriel_dashboard', async (req,res) =>{
         const usuarios = await User.findAll({
             attributes: ['nome_pg']
         });
+        // Busca todos os registros da tabela Meals
+        const meals = await Meals.findAll();
+        
+        // Debug: imprime os dados no console
         usuarios.forEach(usuario => console.log(usuario.nome_pg));
-        res.render('furriel_dashboard', {usuarios});
+        //console.log("Usuários:", usuarios); //descomente para Debug
+        //console.log("Refeições:", meals);  //descomente para Debug
+
+
+        res.render('furriel_dashboard', {usuarios,meals});
     } catch (error) {
         console.error("Erro ao buscar usuários:", error);
         res.status(500).send("Erro interno ao carregar usuários");
     }
 });
-
-
-app.get('/usuarios-por-refeicao', async (req, res) => {
+app.get('/furriel_dashboard_data', async (req, res) => {
     const { data, refeicao } = req.query;
-
-    if (!data || !refeicao) {
-        return res.status(400).json({ error: "Os parâmetros `data` e `refeicao` são obrigatórios." });
-    }
-
     try {
         const dataFormatada = moment(data, "DD/MM/YYYY").format("YYYY-MM-DD");
-
-        // Busca usuários que têm essa refeição registrada no dia específico
+        console.log(`A data  a ser buscada é ${dataFormatada}`);
+        console.log(`A refeição a ser buscada é ${refeicao}`);
         const usuarios = await User.findAll({
-            attributes: ['nome_pg', 'id'],
-            include: [{
-                model: Meals, // Certifique-se de que está usando o nome correto do modelo
-                as: "refeicoes", //  Certifique-se de que o alias corresponde ao definido na associação
-                required: true,
-                where: {
-                    dia: dataFormatada,
-                    tipo_refeicao: refeicao.toLowerCase() // Certifique-se de que está filtrando corretamente
-                }
-            }]
-        });
+        attributes: ['id','nome_pg']
+      });
+      const meals = await Meals.findAll();
+            // Filtra os usuários que possuem pelo menos uma meal que:
+            // - tem user_id igual ao id do usuário,
+            // - tem dia igual a dataFormatada,
+            // - tem tipo_refeicao igual ao valor do parâmetro (em minúsculas)
+            const arranchados = usuarios.filter(usuario =>
+                meals.some(meal =>
+                meal.user_id === usuario.id &&
+                moment(meal.dia).format("YYYY-MM-DD") === dataFormatada &&
+                meal.tipo_refeicao.toLowerCase() === refeicao.toLowerCase()
+                )
+            ).map(usuario => usuario.nome_pg);
 
-        console.log(`Usuários que marcaram ${refeicao} em ${data}:`, usuarios.map(u => u.nome_pg));
 
-        res.json({ usuarios: usuarios.map(user => user.nome_pg) });
+      console.log(`Os usuários arranchados para o ${refeicao} são : ${arranchados}`);
+      res.json({ usuarios, meals, arranchados });
     } catch (error) {
-        console.error("Erro ao buscar usuários por refeição:", error);
-        res.status(500).json({ error: "Erro ao buscar usuários", details: error.message });
+      console.error("Erro ao buscar dados da dashboard:", error);
+      res.status(500).json({ error: "Erro ao buscar dados", details: error.message });
     }
-});
-
-
-
+  });
+  
 
 // Rota para obter seleções de refeições de um usuário
 app.get('/get-selecoes', async (req, res) => {
