@@ -304,7 +304,7 @@ app.get('/furriel_dashboard_data', async (req, res) => {
             ).map(usuario => usuario.nome_pg);
 
 
-      console.log(`Os usuários arranchados para o ${refeicao} são : ${arranchados}`);
+      console.log(`Os usuários arranchados para o ${refeicao} em ${dataFormatada} são : ${arranchados}`);
       res.json({ usuarios, meals, arranchados });
     } catch (error) {
       console.error("Erro ao buscar dados da dashboard:", error);
@@ -312,7 +312,76 @@ app.get('/furriel_dashboard_data', async (req, res) => {
     }
   });
   
+app.post('/salvar-selecoes-multiplos', async (req, res) => {
+    const { selecoes, dia, tipo_refeicao } = req.body;
 
+    console.log(`Dia selecionado: ${dia}`);
+    console.log(`Refeição selecionada: ${tipo_refeicao}`);
+
+    // Converte a data para o formato esperado pelo banco de dados
+    const diaFormatado = moment(dia, "DD/MM/YYYY").format("YYYY-MM-DD");
+
+    // Se o array de seleções estiver vazio, apaga todos os registros para esse dia e refeição
+    if (!Array.isArray(selecoes) || selecoes.length === 0) {
+      const deletados = await Meals.destroy({
+        where: {
+          dia: diaFormatado,
+          tipo_refeicao: tipo_refeicao.toLowerCase()
+        }
+      });
+      console.log(`Registros deletados para ${diaFormatado} e ${tipo_refeicao.toLowerCase()}:`, deletados);
+      return res.json({ message: "Registros apagados para o dia e refeição especificados." });
+    }
+
+
+    
+    try {
+      console.log("Seleções recebidas:", selecoes);
+  
+      // Identifica os grupos únicos (dia e refeição) presentes nas seleções.
+      // Ex: para cada combinação de dia (no formato "DD/MM/YYYY") e tipo_refeicao (em minúsculas),
+      // cria uma chave única.
+      const gruposUnicos = {};
+      selecoes.forEach(sel => {
+        const key = `${sel.dia}_${sel.tipo_refeicao.toLowerCase()}`;
+        gruposUnicos[key] = { dia: sel.dia, tipo_refeicao: sel.tipo_refeicao.toLowerCase() };
+      });
+  
+      // Para cada grupo único, converte a data para "YYYY-MM-DD" e remove todos os registros
+      // na tabela Meals para esse dia e tipo de refeição.
+      for (const key in gruposUnicos) {
+        const { dia, tipo_refeicao } = gruposUnicos[key];
+        const diaFormatado = moment(dia, "DD/MM/YYYY").format("YYYY-MM-DD");
+        await Meals.destroy({
+          where: {
+            dia: diaFormatado,
+            tipo_refeicao: tipo_refeicao
+          }
+        });
+        console.log(`Registros removidos para o dia ${diaFormatado} e refeição ${tipo_refeicao}`);
+      }
+  
+      // Após remover, insere todas as novas seleções enviadas.
+      // Cada seleção deve conter: user_id, dia (no formato "DD/MM/YYYY") e tipo_refeicao.
+      for (const sel of selecoes) {
+        const diaFormatado = moment(sel.dia, "DD/MM/YYYY").format("YYYY-MM-DD");
+        await Meals.create({
+          user_id: sel.user_id,
+          dia: diaFormatado,
+          tipo_refeicao: sel.tipo_refeicao.toLowerCase()
+        });
+      }
+  
+      console.log("Seleções atualizadas com sucesso.");
+      res.json({ message: "Seleções registradas com sucesso!" });
+    } catch (error) {
+      console.error("Erro ao salvar seleções múltiplos:", error);
+      res.status(500).json({ error: "Erro ao salvar seleções", details: error.message });
+    }
+  });
+  
+  
+  
 // Rota para obter seleções de refeições de um usuário
 app.get('/get-selecoes', async (req, res) => {
     const userId = req.query.user_id; // Obter o ID do usuário da query string

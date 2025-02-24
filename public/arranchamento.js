@@ -5,7 +5,7 @@ fetch('/dashboard-data')
             welcomeMessage.textContent = `Bem-vindo, ${data.username}!`;
             // Armazenar o ID do usuário para usá-lo no arranchamento
             const usuarioId = data.user_id;
-            console.log(`usuarioId:${usuarioId}`);
+            //console.log(`usuarioId:${usuarioId}`);
         })
         .catch(error => {
             console.error('Erro ao carregar dados do dashboard:', error);

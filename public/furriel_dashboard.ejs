@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arranchamento - Furriel</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <script src="furriel.js" defer></script>
 
 </head>
@@ -21,7 +22,7 @@
         <select id="refeicao-dropdown"></select>
 
         <h3>Lista de Usuários</h3>
-
+        <button id="toggleSelecionarTudo" type="button">Selecionar/Desmarcar Tudo</button>
         <table border="1">
             <thead>
                 <tr>
@@ -35,7 +36,7 @@
         </table>
 
         <br>
-        <button id="salvarSelecoes" type="button">Salvar</button>
+        <button id="salvarSelecoes" type="button" onclick="salvarSelecoesMultiplos()">Salvar</button>
     </div>
 </body>
 </html>
