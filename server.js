@@ -7,15 +7,21 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken'); 
 const cookieParser = require('cookie-parser');
 const moment = require('moment');
+const { where, Op } = require('sequelize');
+const cron = require('node-cron');
+const path = require('path');
 const app = express();
 app.use(express.static('public'));
+app.use(express.static('assets'));
 app.set('view engine', 'ejs');
-const path = require('path');
-const { where } = require('sequelize');
 app.set('views', path.join(__dirname, 'public'));
 app.use(express.json()); // Middleware para parsear JSON
 app.use(cookieParser()); // Habilita o uso de cookies
+
+
 port = 3000 ; 
+
+// app.use(favicon(path.join(__dirname, 'assets', 'favicon.ico')));
 
 
 sequelize.sync({ alter: true }).then(() => {
@@ -35,7 +41,7 @@ const verifyToken = (req, res, next) => {
   
 	jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
 	  if (err) {
-		return res.redirect('/login'); // Redireciona se o token for inválido
+		return res.redirect('/'); // Redireciona se o token for inválido
 	  }
   
 	  // Adiciona os dados do usuário decodificados à requisição
@@ -51,7 +57,7 @@ app.post('/login', async (req, res) => {
   
 	  // Buscar o usuário no banco de dados
 	  const user = await User.findOne({ where: { username } });
-  
+
 	  if (!user) {
 		return res.status(404).json({ error: 'Usuário não encontrado' });
 	  }
@@ -75,13 +81,24 @@ app.post('/login', async (req, res) => {
 		sameSite: 'Lax', // Permite o envio em navegação normal
 	  });
 
+    // Define a URL de redirecionamento com base no username
+    let redirectUrl = '/dashboard';
+    if (user.username.toLowerCase() === 'furriel') {
+      redirectUrl = '/furriel_dashboard';
+    }
+
 	//   console.log('Token gerado:', token); // Log para verificar o token
-	return res.json({ message: 'Login bem-sucedido', redirect: '/dashboard' });
+	return res.json({ message: 'Login bem-sucedido', redirect: redirectUrl });
 	
 	} catch (error) {
 	  return res.status(500).json({ error: error.message });
 	}
   });
+
+app.post('/logout', (req, res) => {
+    res.clearCookie('token'); // Limpa o cookie de autenticação
+    return res.json({ message: 'Saindo...', redirect: '/' });
+ });
 
   // Rota para fornecer dados do usuário para o dashboard
 app.get('/dashboard', verifyToken, async (req, res) => {
@@ -260,9 +277,17 @@ app.get('/refeicoes-usuario', async (req, res) => {
     }
 });
 
-app.get ('/furriel_dashboard', async (req,res) =>{
+
+
+app.get ('/furriel_dashboard',verifyToken, async (req,res) =>{
 
     try{
+       // Verifica se o usuário autenticado possui o username "furriel"
+      if (req.user.username.toLowerCase() !== 'furriel') {
+        return res.redirect('/');
+      }
+
+
         const usuarios = await User.findAll({
             attributes: ['nome_pg']
         });
@@ -288,20 +313,20 @@ app.get('/furriel_dashboard_data', async (req, res) => {
         console.log(`A data  a ser buscada é ${dataFormatada}`);
         console.log(`A refeição a ser buscada é ${refeicao}`);
         const usuarios = await User.findAll({
-        attributes: ['id','nome_pg']
+        attributes: ['id','nome_pg', 'grupo']
       });
       const meals = await Meals.findAll();
-            // Filtra os usuários que possuem pelo menos uma meal que:
-            // - tem user_id igual ao id do usuário,
-            // - tem dia igual a dataFormatada,
-            // - tem tipo_refeicao igual ao valor do parâmetro (em minúsculas)
-            const arranchados = usuarios.filter(usuario =>
-                meals.some(meal =>
-                meal.user_id === usuario.id &&
-                moment(meal.dia).format("YYYY-MM-DD") === dataFormatada &&
-                meal.tipo_refeicao.toLowerCase() === refeicao.toLowerCase()
-                )
-            ).map(usuario => usuario.nome_pg);
+      // Filtra os usuários que possuem pelo menos uma meal que:
+      // - tem user_id igual ao id do usuário,
+      // - tem dia igual a dataFormatada,
+      // - tem tipo_refeicao igual ao valor do parâmetro (em minúsculas)
+      const arranchados = usuarios.filter(usuario =>
+          meals.some(meal =>
+          meal.user_id === usuario.id &&
+          moment(meal.dia).format("YYYY-MM-DD") === dataFormatada &&
+          meal.tipo_refeicao.toLowerCase() === refeicao.toLowerCase()
+          )
+      ).map(usuario => usuario.nome_pg);
 
 
       console.log(`Os usuários arranchados para o ${refeicao} em ${dataFormatada} são : ${arranchados}`);
@@ -313,7 +338,7 @@ app.get('/furriel_dashboard_data', async (req, res) => {
   });
   
 app.post('/salvar-selecoes-multiplos', async (req, res) => {
-    const { selecoes, dia, tipo_refeicao } = req.body;
+    const { selecoes, dia, tipo_refeicao, grupo } = req.body;
 
     console.log(`Dia selecionado: ${dia}`);
     console.log(`Refeição selecionada: ${tipo_refeicao}`);
@@ -321,7 +346,7 @@ app.post('/salvar-selecoes-multiplos', async (req, res) => {
     // Converte a data para o formato esperado pelo banco de dados
     const diaFormatado = moment(dia, "DD/MM/YYYY").format("YYYY-MM-DD");
 
-    // Se o array de seleções estiver vazio, apaga todos os registros para esse dia e refeição
+    // Se o array de seleções estiver vazio, apaga todos os registros para esse dia e refeição(Desarrancha todos)
     if (!Array.isArray(selecoes) || selecoes.length === 0) {
       const deletados = await Meals.destroy({
         where: {
@@ -334,35 +359,20 @@ app.post('/salvar-selecoes-multiplos', async (req, res) => {
     }
 
 
-    
     try {
       console.log("Seleções recebidas:", selecoes);
-  
-      // Identifica os grupos únicos (dia e refeição) presentes nas seleções.
-      // Ex: para cada combinação de dia (no formato "DD/MM/YYYY") e tipo_refeicao (em minúsculas),
-      // cria uma chave única.
-      const gruposUnicos = {};
-      selecoes.forEach(sel => {
-        const key = `${sel.dia}_${sel.tipo_refeicao.toLowerCase()}`;
-        gruposUnicos[key] = { dia: sel.dia, tipo_refeicao: sel.tipo_refeicao.toLowerCase() };
+    
+      // Converte as datas no formato correto e apaga os registros antes de inserir os novos
+      const diaFormatado = moment(dia, "DD/MM/YYYY").format("YYYY-MM-DD");
+      await Meals.destroy({
+        where: {
+          dia: diaFormatado,
+          tipo_refeicao: tipo_refeicao.toLowerCase()
+        }
       });
-  
-      // Para cada grupo único, converte a data para "YYYY-MM-DD" e remove todos os registros
-      // na tabela Meals para esse dia e tipo de refeição.
-      for (const key in gruposUnicos) {
-        const { dia, tipo_refeicao } = gruposUnicos[key];
-        const diaFormatado = moment(dia, "DD/MM/YYYY").format("YYYY-MM-DD");
-        await Meals.destroy({
-          where: {
-            dia: diaFormatado,
-            tipo_refeicao: tipo_refeicao
-          }
-        });
-        console.log(`Registros removidos para o dia ${diaFormatado} e refeição ${tipo_refeicao}`);
-      }
-  
-      // Após remover, insere todas as novas seleções enviadas.
-      // Cada seleção deve conter: user_id, dia (no formato "DD/MM/YYYY") e tipo_refeicao.
+      console.log(`Registros removidos para o dia ${diaFormatado} e refeição ${tipo_refeicao.toLowerCase()}`);
+    
+      // Insere as novas seleções enviadas
       for (const sel of selecoes) {
         const diaFormatado = moment(sel.dia, "DD/MM/YYYY").format("YYYY-MM-DD");
         await Meals.create({
@@ -371,17 +381,14 @@ app.post('/salvar-selecoes-multiplos', async (req, res) => {
           tipo_refeicao: sel.tipo_refeicao.toLowerCase()
         });
       }
-  
+    
       console.log("Seleções atualizadas com sucesso.");
       res.json({ message: "Seleções registradas com sucesso!" });
     } catch (error) {
-      console.error("Erro ao salvar seleções múltiplos:", error);
+      console.error("Erro ao salvar seleções múltiplas:", error);
       res.status(500).json({ error: "Erro ao salvar seleções", details: error.message });
-    }
-  });
-  
-  
-  
+    }});
+    
 // Rota para obter seleções de refeições de um usuário
 app.get('/get-selecoes', async (req, res) => {
     const userId = req.query.user_id; // Obter o ID do usuário da query string
@@ -409,7 +416,29 @@ app.get('/get-selecoes', async (req, res) => {
     }
 });
 
+// Agendar uma tarefa para rodar todos os dias à meia-noite
+//No caso apaga todas entradas anteriores a 'n' dias para fins de preservação do BD
+cron.schedule('0 0 * * *', async () => {
+  const n = 3;
+  try {
+    // Calcula a data limite: 'n' dias atrás (inclusive)
+    const cutoffDate = moment().subtract(n, 'days').format("YYYY-MM-DD");
+    console.log(`Executando limpeza: apagando registros com dia <= ${cutoffDate}`);
 
+    // Apaga todas as entradas cuja data seja menor ou igual à data limite
+    const deletedCount = await Meals.destroy({
+      where: {
+        dia: {
+          [Op.lte]: cutoffDate
+        }
+      }
+    });
+
+    console.log(`Limpeza concluída: ${deletedCount} registros apagados.`);
+  } catch (error) {
+    console.error("Erro ao executar limpeza de registros antigos:", error);
+  }
+});
 
 app.listen(port, () => {
 	console.log(`Servidor na porta ${port}`)

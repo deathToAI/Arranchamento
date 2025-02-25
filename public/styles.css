@@ -1,4 +1,5 @@
 body {
+    align-items: center;
     font-family: Arial, sans-serif;
     background: linear-gradient(90deg, rgb(12, 66, 2) 0%, rgb(46, 107, 3) 67%, rgba(0,196,54,1) 100%);
     margin: 0;
@@ -6,7 +7,6 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    align-items: center;
 }
 h1 {
     margin: 20px 0;
@@ -99,3 +99,22 @@ table, th, td {
     box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
     transform: translateY(-3px);
 }
+
+#logout-div {
+    align-self: flex-start; /* Alinha este elemento à esquerda do container flex */
+    width: 100%;            /* Opcional: ocupa toda a largura para garantir o alinhamento */
+    text-align: left;       /* Alinha o conteúdo interno à esquerda */
+    margin: 20px;           /* Ajuste conforme necessário */
+  }
+  
+  
+  #logout {
+    font-size: 18px;          /* aumenta o tamanho da fonte */
+    padding: 10px 20px;       /* aumenta o espaço interno */
+    cursor: pointer;          /* exibe o cursor pointer */
+    background-color: #007BFF;/* cor de fundo, opcional */
+    color: #fff;              /* cor do texto */
+    border: none;             /* sem borda */
+    border-radius: 5px;       /* bordas arredondadas, opcional */
+  }
+  

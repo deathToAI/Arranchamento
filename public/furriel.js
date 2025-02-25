@@ -45,6 +45,7 @@ function preencherDropdowns() {
 function buscarUsuariosPorRefeicao() {
     const dataSelecionada = document.getElementById("data-dropdown").value;
     const refeicaoSelecionada = document.getElementById("refeicao-dropdown").value;
+    const grupoSelecionado = parseInt(document.getElementById("grupo-dropdown").value, 10);
     document.getElementById("header-refeicao").textContent = refeicaoSelecionada.toUpperCase();
     console.log("A refeição é:", refeicaoSelecionada);
 
@@ -52,9 +53,20 @@ function buscarUsuariosPorRefeicao() {
         .then(response => response.json())
         .then(data => {
             console.log("Dados retornados:", data);
-            // Assume que data possui: { usuarios: [...], arranchados: [...] }
-            atualizarTabelaUsuarios(data.usuarios, data.arranchados);
-        })
+            // Filtra os usuários que pertencem ao grupo selecionado
+            const usuariosFiltrados = data.usuarios.filter(u => u.grupo === grupoSelecionado);
+            
+            // Filtra os arranchados para que sejam apenas os que pertencem ao grupo selecionado
+            const arranchadosFiltrados = data.arranchados.filter(nome => {
+              const user = data.usuarios.find(u => u.nome_pg === nome);
+              return user && user.grupo === grupoSelecionado;
+            });
+            
+            console.log(`Usuários filtrados para o grupo ${grupoSelecionado}:`, usuariosFiltrados);
+            console.log(`Arranchados filtrados para o grupo ${grupoSelecionado}:`, arranchadosFiltrados);
+            
+            atualizarTabelaUsuarios(usuariosFiltrados, arranchadosFiltrados);
+          })
         .catch(error => console.error("Erro ao carregar dados da dashboard:", error));
 }
 
@@ -105,17 +117,15 @@ function salvarSelecoesMultiplos() {
     const refeicaoSelecionada = document.getElementById("refeicao-dropdown").value;
     
     //Depuração
-    console.log("Data selecionada:", dataSelecionada);
-    // Converte a data para o formato esperado pelo banco de dados
-    //const dataFormatada = moment(dataSelecionada, "DD/MM/YYYY").format("YYYY-MM-DD");
-    //Depuração:
-    //console.log("Data formatada:", dataFormatada);
+    //console.log("Data selecionada:", dataSelecionada);
+    
+    //Define o grupo a ser arranchado
 
-
+ 
     // Obtem a tabela de usuários arranchados
     const tbody = document.getElementById("tabela-arranchados");
     const rows = tbody.getElementsByTagName("tr");
-    
+  
     // Array para armazenar as seleções de cada usuário
     const selecoes = [];
     
@@ -159,7 +169,7 @@ function salvarSelecoesMultiplos() {
       })
       .then(data => {
         console.log("Resposta do servidor:", data);
-        alert("Refeições atualizadas com sucesso!");
+        alert("Arranchamento atualizado com sucesso!");
       })
       .catch(error => console.error("Erro ao salvar seleções:", error));
   }
@@ -180,8 +190,6 @@ function toggleSelecionarTudo() {
       checkbox.checked = !allChecked;
     });
   }
-  
-
 
 document.addEventListener("DOMContentLoaded", () => {
     preencherDropdowns();
@@ -189,5 +197,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("header-refeicao").textContent = document.getElementById("refeicao-dropdown").value.toUpperCase();
     document.getElementById("data-dropdown").addEventListener("change", buscarUsuariosPorRefeicao);
     document.getElementById("refeicao-dropdown").addEventListener("change", buscarUsuariosPorRefeicao);
+    document.getElementById("grupo-dropdown").addEventListener("change", buscarUsuariosPorRefeicao);
     document.getElementById("toggleSelecionarTudo").addEventListener("click", toggleSelecionarTudo);
 });

@@ -5,14 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arranchamento - Furriel</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <script src="furriel.js" defer></script>
-
+    <script src="scripts.js"></script>
 </head>
 <body>
+    <div id="logout-div" >
+        <button id="logout" type="button" href="/logout">Logout</button>
+    </div>
     <h1>Sistema de arranchamento 3ª Cia Com Bld - Perfil de Furriel</h1><br><br> 
 
     <div class="dashboard-content">
+        <label for="grupo-dropdown">Selecione o Grupo:</label>
+        <select id="grupo-dropdown">
+            <option value="1">Of / St/ Sgt</option>
+            <option value="2">Cb / Sd</option>
+            <option value="3">Recrutas</option>
+        </select>
+
         <h2 id="welcome-message">Bem-vindo Furriel!</h2>
 
         <label for="data-dropdown">Selecione a data:</label>
@@ -39,4 +48,8 @@
         <button id="salvarSelecoes" type="button" onclick="salvarSelecoesMultiplos()">Salvar</button>
     </div>
 </body>
+<script>
+
+
+</script>
 </html>
