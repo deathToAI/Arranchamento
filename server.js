@@ -12,16 +12,10 @@ const cron = require('node-cron');
 const path = require('path');
 const app = express();
 app.use(express.static('public'));
-app.use(express.static('assets'));
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'public'));
+app.use('/static', express.static('static'));
 app.use(express.json()); // Middleware para parsear JSON
 app.use(cookieParser()); // Habilita o uso de cookies
-
-
 port = 3000 ; 
-
-// app.use(favicon(path.join(__dirname, 'assets', 'favicon.ico')));
 
 
 sequelize.sync({ alter: true }).then(() => {
@@ -100,7 +94,7 @@ app.post('/logout', (req, res) => {
     return res.json({ message: 'Saindo...', redirect: '/' });
  });
 
-  // Rota para fornecer dados do usuário para o dashboard
+// Rota para fornecer dados do usuário para o dashboard
 app.get('/dashboard', verifyToken, async (req, res) => {
 	try {
 	  // O token está disponível no req.cookies.token
@@ -277,8 +271,6 @@ app.get('/refeicoes-usuario', async (req, res) => {
     }
 });
 
-
-
 app.get ('/furriel_dashboard',verifyToken, async (req,res) =>{
 
     try{
@@ -439,6 +431,14 @@ cron.schedule('0 0 * * *', async () => {
     console.error("Erro ao executar limpeza de registros antigos:", error);
   }
 });
+
+app.get('/aprov',async(req,res)=>{
+  try{
+  res.sendFile(path.join(__dirname, 'public', 'aprov.html'));
+  }catch(error){
+    res.status(500).send("Erro ao acessar a página de aprovisionamento");
+
+  }});
 
 app.listen(port, () => {
 	console.log(`Servidor na porta ${port}`)
