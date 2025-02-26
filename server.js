@@ -15,6 +15,7 @@ app.use(express.static('public'));
 app.use('/static', express.static('static'));
 app.use(express.json()); // Middleware para parsear JSON
 app.use(cookieParser()); // Habilita o uso de cookies
+const ExcelJS = require('exceljs');
 port = 3000 ; 
 
 
@@ -143,7 +144,8 @@ app.get('/dashboard-data', verifyToken, async (req, res) => {
 			attributes : [ 'dia', 'tipo_refeicao'],
 			//order : [['dia', 'ASC']]
 		});
-		console.log(refeicoes);
+		//Depuração
+    //console.log(refeicoes);
 		
         if (!user) {
             return res.status(404).json({ error: 'Usuário não encontrado' });
@@ -288,11 +290,10 @@ app.get ('/furriel_dashboard',verifyToken, async (req,res) =>{
         
         // Debug: imprime os dados no console
         usuarios.forEach(usuario => console.log(usuario.nome_pg));
-        //console.log("Usuários:", usuarios); //descomente para Debug
-        //console.log("Refeições:", meals);  //descomente para Debug
+        //console.log("Usuários:", usuarios); //Depuração
+        //console.log("Refeições:", meals);  //Depuração
 
-
-        res.render('furriel_dashboard', {usuarios,meals});
+        res.sendFile(__dirname+'/public/furriel_dashboard.html');
     } catch (error) {
         console.error("Erro ao buscar usuários:", error);
         res.status(500).send("Erro interno ao carregar usuários");
@@ -302,8 +303,9 @@ app.get('/furriel_dashboard_data', async (req, res) => {
     const { data, refeicao } = req.query;
     try {
         const dataFormatada = moment(data, "DD/MM/YYYY").format("YYYY-MM-DD");
-        console.log(`A data  a ser buscada é ${dataFormatada}`);
-        console.log(`A refeição a ser buscada é ${refeicao}`);
+        //Depuração
+        //console.log(`A data  a ser buscada é ${dataFormatada}`);
+        //console.log(`A refeição a ser buscada é ${refeicao}`);
         const usuarios = await User.findAll({
         attributes: ['id','nome_pg', 'grupo']
       });
@@ -437,9 +439,149 @@ app.get('/aprov',async(req,res)=>{
   res.sendFile(path.join(__dirname, 'public', 'aprov.html'));
   }catch(error){
     res.status(500).send("Erro ao acessar a página de aprovisionamento");
-
   }});
 
+  app.get('/download-arranchados', async (req, res) => {
+    try {
+      const { data, grupo } = req.query;
+      if (!data || !grupo) {
+        return res.status(400).send("Parâmetros 'data' e 'grupo' são obrigatórios.");
+      }
+  
+      // Converte a data do parâmetro para o formato ISO (para busca) e mantém o formato para exibição.
+      const dataFormatadaIso = moment(data, "DD/MM/YYYY").format("YYYY-MM-DD");
+      const dataFormatadaDisplay = data; // "DD/MM/YYYY"
+  
+      // Busca os usuários que pertencem ao grupo informado
+      const usuarios = await User.findAll({
+        where: { grupo: parseInt(grupo, 10) },
+        attributes: ['id', 'nome_pg']
+      });
+  
+      // Busca todas as refeições registradas para o dia informado
+      const meals = await Meals.findAll({
+        where: { dia: dataFormatadaIso }
+      });
+  
+      // Cria conjuntos para cada tipo de refeição, armazenando os IDs dos usuários aprovados
+      const arranchadosMap = {
+        cafe: new Set(),
+        almoco: new Set(),
+        janta: new Set()
+      };
+  
+      meals.forEach(meal => {
+        const tipo = meal.tipo_refeicao.toLowerCase();
+        if (arranchadosMap[tipo]) {
+          arranchadosMap[tipo].add(meal.user_id);
+        }
+      });
+  
+      // Para cada refeição, filtra os usuários do grupo que estão aprovados
+      const arranchadosCafe = usuarios.filter(u => arranchadosMap.cafe.has(u.id)).map(u => u.nome_pg);
+      const arranchadosAlmoco = usuarios.filter(u => arranchadosMap.almoco.has(u.id)).map(u => u.nome_pg);
+      const arranchadosJanta = usuarios.filter(u => arranchadosMap.janta.has(u.id)).map(u => u.nome_pg);
+  
+      // Cria um novo workbook e adiciona uma worksheet
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Arranchados');
+  
+      // Linha 1: Título - mescla de A1 até E1
+      worksheet.mergeCells('A1:E1');
+      const titleCell = worksheet.getCell('A1');
+      titleCell.value = `Arranchamento para ${dataFormatadaDisplay}`;
+      titleCell.font = { bold: true, size: 18 };
+      titleCell.alignment = { horizontal: 'center' };
+  
+      let currentRow = 2;
+  
+      // Função auxiliar para escrever um bloco: cabeçalho e lista de nomes
+      function writeBlock(header, nomes) {
+        // Cabeçalho do bloco: mescla de A(currentRow) até D(currentRow)
+        const headerRange = `A${currentRow}:D${currentRow}`;
+        worksheet.mergeCells(headerRange);
+        worksheet.getCell(`A${currentRow}`).value = header;
+        worksheet.getCell(`A${currentRow}`).font = { bold: true };
+        currentRow++;
+        // Preenche as linhas com os nomes, um nome por linha na coluna A
+        nomes.forEach(nome => {
+          worksheet.getCell(`A${currentRow}`).value = nome;
+          currentRow++;
+        });
+      }
+  
+      // Escreve o bloco para "Café"
+      writeBlock("Café", arranchadosCafe);
+      // Escreve o bloco para "Almoço"
+      writeBlock("Almoço", arranchadosAlmoco);
+      // Escreve o bloco para "Janta"
+      writeBlock("Janta", arranchadosJanta);
+  
+      // Configura os cabeçalhos da resposta para download do arquivo Excel
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=arranchados.xlsx');
+  
+      // Escreve o workbook na resposta e finaliza
+      await workbook.xlsx.write(res);
+      res.end();
+    } catch (error) {
+      console.error("Erro ao gerar arquivo Excel:", error);
+      res.status(500).send("Erro ao gerar arquivo Excel");
+    }
+  });
+
+  app.get('/aprov_dashboard_data', async (req, res) => {
+    const { data, grupo } = req.query;
+    try {
+      // //Depuração
+      // console.log("Query params recebidos:", req.query);
+      // console.log(data);
+      // console.log(grupo);
+      // Converte a data para o formato usado no banco de dados
+      const dataFormatada = moment(data, "DD/MM/YYYY").format("YYYY-MM-DD");
+      //console.log(`A data a ser buscada é: ${dataFormatada}`);
+      //console.log(`Grupo a ser buscado é: ${grupo}`);
+  
+      // Busca todos os usuários, incluindo o campo "grupo"
+      const usuarios = await User.findAll({
+        attributes: ['id', 'nome_pg', 'grupo']
+      });
+      // Busca todas as refeições para o dia informado
+      const meals = await Meals.findAll({
+        where: { dia: dataFormatada }
+      });
+      // Converte o parâmetro grupo para número
+      const grupoNum = parseInt(grupo, 10);
+            // Filtra os usuários que pertencem ao grupo informado (convertendo o grupo de cada usuário para número)
+
+      const usuariosFiltrados = usuarios.filter(u => parseInt(u.grupo, 10) === grupoNum);
+      // DEPURAÇÃO
+      //console.log("Usuários filtrados:", usuariosFiltrados.map(u => u.nome_pg));
+      // usuarios.forEach(u => {
+      //   console.log(u.nome_pg, u.grupo, typeof u.grupo);
+      // });
+
+      // Agrupa os aprovados (arranchados) por tipo de refeição para os usuários filtrados
+      const arranchados = {
+        cafe: usuariosFiltrados
+          .filter(u => meals.some(m => m.user_id === u.id && m.tipo_refeicao.toLowerCase() === 'cafe'))
+          .map(u => u.nome_pg),
+        almoco: usuariosFiltrados
+          .filter(u => meals.some(m => m.user_id === u.id && m.tipo_refeicao.toLowerCase() === 'almoco'))
+          .map(u => u.nome_pg),
+        janta: usuariosFiltrados
+          .filter(u => meals.some(m => m.user_id === u.id && m.tipo_refeicao.toLowerCase() === 'janta'))
+          .map(u => u.nome_pg)
+      };
+
+      console.log(`Os arranchados para o dia ${dataFormatada} e grupo ${grupoNum} são:`, arranchados);
+      res.json({ usuarios: usuariosFiltrados, meals, arranchados });
+      } catch (error) {
+      console.error("Erro ao buscar dados da dashboard de aprovação:", error);
+      res.status(500).json({ error: "Erro ao buscar dados", details: error.message });
+      }
+      });
+  
 app.listen(port, () => {
 	console.log(`Servidor na porta ${port}`)
 });
