@@ -4,34 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arranchamento - Furriel</title>
-    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/static/styles.css">
     <script src="/static/furriel.js" defer></script>
-    <script src="/static/scripts.js"></script>
+    <script src="../static/scripts.js" defer></script>
 </head>
 <body>
-    <div id="logout-div" >
-        <button id="logout" type="button" href="/logout">Logout</button>
+    <div id="logout-div">
+        <button id="logout" class="botao-logout" type="button">SAIR</button>
     </div>
     <h1>Sistema de arranchamento 3ª Cia Com Bld - Perfil de Furriel</h1><br><br> 
 
     <div class="dashboard-content">
+        <h2 id="welcome-message">Bem-vindo Furriel!</h2>
+        <!-- Lista de grupos -->
         <label for="grupo-dropdown">Selecione o Grupo:</label>
-        <select id="grupo-dropdown">
+        <select class="sel-dropdown" id="grupo-dropdown">
             <option value="1">Of / St/ Sgt</option>
             <option value="2">Cb / Sd</option>
             <option value="3">Recrutas</option>
         </select>
-
-        <h2 id="welcome-message">Bem-vindo Furriel!</h2>
-
+        <!-- Lista de datas -->
         <label for="data-dropdown">Selecione a data:</label>
-        <select id="data-dropdown"></select>
-        
+        <select class="sel-dropdown" id="data-dropdown"></select>
+        <!-- Lista de refeições -->
         <label for="refeicao-dropdown">Selecione a refeição:</label>
-        <select id="refeicao-dropdown"></select>
-
+        <select class="sel-dropdown" id="refeicao-dropdown"></select>
+        <!-- Pessoal arranchado -->
         <h3>Lista de Usuários</h3>
-        <button id="toggleSelecionarTudo" type="button">Selecionar/Desmarcar Tudo</button>
+        <button class="marc-desmarc" id="toggleSelecionarTudo" type="button">Selecionar/Desmarcar Tudo</button>
         <table border="1">
             <thead>
                 <tr>
@@ -45,7 +45,12 @@
         </table>
 
         <br>
-        <button id="salvarSelecoes" type="button" onclick="salvarSelecoesMultiplos()">Salvar</button>
+        <button class="botao-furriel" id="salvarSelecoes" type="button" onclick="salvarSelecoesMultiplos()">Salvar</button>
+    </div>
+    <div class="aviso-container">
+        <span class="seta-esquerda">&#x2192;</span>
+        <p class="aviso-clicar">Não se esqueça de clicar no botão "SALVAR"</p>
+        <span class="seta-direita">&#x2190;</span>
     </div>
 </body>
 </html>

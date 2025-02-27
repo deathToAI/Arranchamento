@@ -47,7 +47,8 @@ function buscarUsuariosPorRefeicao() {
     const refeicaoSelecionada = document.getElementById("refeicao-dropdown").value;
     const grupoSelecionado = parseInt(document.getElementById("grupo-dropdown").value, 10);
     document.getElementById("header-refeicao").textContent = refeicaoSelecionada.toUpperCase();
-    console.log("A refeição é:", refeicaoSelecionada);
+    //Depuração
+    //console.log("A refeição é:", refeicaoSelecionada);
 
     fetch(`/furriel_dashboard_data?data=${dataSelecionada}&refeicao=${refeicaoSelecionada}`)
         .then(response => response.json())
@@ -61,9 +62,9 @@ function buscarUsuariosPorRefeicao() {
               const user = data.usuarios.find(u => u.nome_pg === nome);
               return user && user.grupo === grupoSelecionado;
             });
-            
-            console.log(`Usuários filtrados para o grupo ${grupoSelecionado}:`, usuariosFiltrados);
-            console.log(`Arranchados filtrados para o grupo ${grupoSelecionado}:`, arranchadosFiltrados);
+            //Depuração
+            //console.log(`Usuários filtrados para o grupo ${grupoSelecionado}:`, usuariosFiltrados);
+            //console.log(`Arranchados filtrados para o grupo ${grupoSelecionado}:`, arranchadosFiltrados);
             
             atualizarTabelaUsuarios(usuariosFiltrados, arranchadosFiltrados);
           })
@@ -109,7 +110,6 @@ function atualizarTabelaUsuarios(usuarios, arranchados) {
         tbody.appendChild(tr);
     });
 }
-
 
 function salvarSelecoesMultiplos() {
     // Obtém os valores selecionados nos dropdowns
@@ -190,6 +190,7 @@ function toggleSelecionarTudo() {
       checkbox.checked = !allChecked;
     });
   }
+
 
 document.addEventListener("DOMContentLoaded", () => {
     preencherDropdowns();

@@ -20,13 +20,17 @@ const user = sequelize.define('user', {
     type: DataTypes.STRING,
     allowNull: false
   },
-  nome_pg:{
+  nome_pg: {
     type: DataTypes.STRING,
-    allowNull : true,
+    allowNull: true,
     unique: false
+  },
+  grupo: {           // Novo campo para o grupo
+    type: DataTypes.INTEGER,
+    allowNull: true  // ou false, conforme sua necessidade
   }
 }, {
-    timestamps: false // Impede que Sequelize tente usar `createdAt` e `updatedAt`
+  timestamps: false // Impede que Sequelize tente usar `createdAt` e `updatedAt`
 });
 {
   hooks: {
