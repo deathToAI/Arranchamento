@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,19 +9,28 @@
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <script src="/static/scripts.js" defer></script>
 </head>
+
 <body>
     <div class="login-container">
-        <h1>Arranchamento</h1>
+        <div class="header-container">
+            <img src="/img/Simbolo_3a_Cia_Com_Bld2.png" alt="Logo" class="header-logo">
+            <h1>
+                <span class="titulo-principal">Arranchamento</span>
+                <span class="titulo-secundario">3ª Cia Com Bld</span>
+            </h1>
+            <img src="/img/Simbolo_3a_Cia_Com_Bld2.png" alt="Logo" class="header-logo">
+        </div>
         <form id="loginForm">
             <input type="text" id="username" placeholder="Usuário" required>
             <input type="password" id="password" placeholder="Senha" required>
-            <button id ="entrar" type="submit">Entrar</button>
+            <button id="entrar" class="botao-login" type="submit">Entrar</button>
         </form>
         <p id="message"></p> <!-- Mensagem de feedback para o usuário -->
     </div>
 
     <script>
- 
+
     </script>
 </body>
+
 </html>
