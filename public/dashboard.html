@@ -1,57 +1,71 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arranchamento </title>
+    <title id="title">Arranchamento </title>
     <link rel="stylesheet" href="/static/styles.css">
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
-    <script src="../static/arranchamento.js"></script>
+    <script src="../static/dashboard.js" defer></script>
     <script src="../static/scripts.js" defer></script>
-  </head>
+</head>
+
 <body>
     <div id="logout-div">
-        <button id="logout" type="button">Logout</button>
+        <button id="logout" class="botao-logout" type="button">SAIR</button>
     </div>
-<h1>Sistema de arranchamento 3ª Cia Com Bld</h1><br><br> 
-<div class = "dashboard-content">
-    <h2 id="welcome-message">Carregando...</h2>
-    <h3> Selecione os dias que deseja se arranchar:</h3>
-    <div> 
-        <table id="tabela" border="1" ></table>
-        <br>
-        <br>
-        <button id="salvarSelecoes" type="button" >Arranchar</button>
+    <div class="header-container">
+        <!-- Opção 1: usando caminho absoluto do servidor -->
+        <img src="/img/Simbolo_3a_Cia_Com_Bld2.png" alt="Logo" class="header-logo">
+        <h1>Sistema de arranchamento 3ª Cia Com Bld</h1>
+        <img src="/img/Simbolo_3a_Cia_Com_Bld2.png" alt="Logo" class="header-logo">
     </div>
-    
-</div>
-<script src="../static/tabelas.js" defer></script>
-<script>
-    // Carregar o nome do usuário ao acessar o dashboard
-    fetch('/dashboard-data')
-        .then(response => response.json())
-        .then(data => {
-            const welcomeMessage = document.getElementById('welcome-message');
-            welcomeMessage.textContent = `Bem-vindo, ${data.username}!`;
-            // Armazenar o ID do usuário para usá-lo no arranchamento
-            const usuarioId = data.user_id;
+    <br><br>
+    <div class="dashboard-content">
+        <h2 id="welcome-message">Carregando...</h2>
+        <h3> Selecione os dias que deseja se arranchar:</h3>
+        <div>
+            <table id="tabela" border="1"></table>
+            <br>
+            <br>
+            <button id="salvarSelecoes" class="botao-arranchar" type="button">Arranchar</button>
+        </div>
+    </div>
+    <div class="aviso-container">
+        <span class="seta-esquerda">&#x2192;</span>
+        <p class="aviso-clicar">Não se esqueça de clicar no botão "Arranchar"</p>
+        <span class="seta-direita">&#x2190;</span>
+    </div>
+    <script src="../static/tabelas.js" defer></script>
+    <script>
+        // Carregar o nome do usuário ao acessar o dashboard
+        fetch('/dashboard-data')
+            .then(response => response.json())
+            .then(data => {
+                const welcomeMessage = document.getElementById('welcome-message');
+                welcomeMessage.textContent = `Bem-vindo, ${data.username}!`;
+                // Armazenar o ID do usuário para usá-lo no arranchamento
+                const usuarioId = data.user_id;
 
-            // Vincular os eventos aos botões
-            document.getElementById('salvarSelecoes').addEventListener('click', function() {
-                salvarSelecoes(usuarioId); // Envia o ID do usuário com as seleções
+                // Vincular os eventos aos botões
+                document.getElementById('salvarSelecoes').addEventListener('click', function () {
+                    salvarSelecoes(usuarioId); // Envia o ID do usuário com as seleções
+                });
+                obterSelecoes(usuarioId);
+
+            })
+
+            .catch(error => {
+                console.error('Erro ao carregar dados do dashboard:', error);
             });
-            obterSelecoes(usuarioId);
-
-        })
-
-        .catch(error => {
-            console.error('Erro ao carregar dados do dashboard:', error);
-        });
 
         document.addEventListener("DOMContentLoaded", function () {
-            
-            
+
+
         });
-</script>
+    </script>
 
 </body>
+
+</html>

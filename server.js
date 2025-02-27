@@ -15,6 +15,8 @@ app.use(express.static('public'));
 app.use('/static', express.static('static'));
 app.use(express.json()); // Middleware para parsear JSON
 app.use(cookieParser()); // Habilita o uso de cookies
+const ExcelJS = require('exceljs');
+const PDFDocument = require('pdfkit');
 port = 3000 ; 
 
 
@@ -143,7 +145,8 @@ app.get('/dashboard-data', verifyToken, async (req, res) => {
 			attributes : [ 'dia', 'tipo_refeicao'],
 			//order : [['dia', 'ASC']]
 		});
-		console.log(refeicoes);
+		//Depuração
+    //console.log(refeicoes);
 		
         if (!user) {
             return res.status(404).json({ error: 'Usuário não encontrado' });
@@ -288,11 +291,10 @@ app.get ('/furriel_dashboard',verifyToken, async (req,res) =>{
         
         // Debug: imprime os dados no console
         usuarios.forEach(usuario => console.log(usuario.nome_pg));
-        //console.log("Usuários:", usuarios); //descomente para Debug
-        //console.log("Refeições:", meals);  //descomente para Debug
+        //console.log("Usuários:", usuarios); //Depuração
+        //console.log("Refeições:", meals);  //Depuração
 
-
-        res.render('furriel_dashboard', {usuarios,meals});
+        res.sendFile(__dirname+'/public/furriel_dashboard.html');
     } catch (error) {
         console.error("Erro ao buscar usuários:", error);
         res.status(500).send("Erro interno ao carregar usuários");
@@ -302,8 +304,9 @@ app.get('/furriel_dashboard_data', async (req, res) => {
     const { data, refeicao } = req.query;
     try {
         const dataFormatada = moment(data, "DD/MM/YYYY").format("YYYY-MM-DD");
-        console.log(`A data  a ser buscada é ${dataFormatada}`);
-        console.log(`A refeição a ser buscada é ${refeicao}`);
+        //Depuração
+        //console.log(`A data  a ser buscada é ${dataFormatada}`);
+        //console.log(`A refeição a ser buscada é ${refeicao}`);
         const usuarios = await User.findAll({
         attributes: ['id','nome_pg', 'grupo']
       });
@@ -437,8 +440,265 @@ app.get('/aprov',async(req,res)=>{
   res.sendFile(path.join(__dirname, 'public', 'aprov.html'));
   }catch(error){
     res.status(500).send("Erro ao acessar a página de aprovisionamento");
-
   }});
+
+app.get('/download-arranchados', async (req, res) => {
+    try {
+      const { data, grupo } = req.query;
+      if (!data || !grupo) {
+        return res.status(400).send("Parâmetros 'data' e 'grupo' são obrigatórios.");
+      }
+  
+      // Converte a data do parâmetro para o formato ISO (para busca) e mantém o formato para exibição.
+      const dataFormatadaIso = moment(data, "DD/MM/YYYY").format("YYYY-MM-DD");
+      const dataFormatadaDisplay = data; // "DD/MM/YYYY"
+  
+      // Busca os usuários que pertencem ao grupo informado
+      const usuarios = await User.findAll({
+        where: { grupo: parseInt(grupo, 10) },
+        attributes: ['id', 'nome_pg']
+      });
+  
+      // Busca todas as refeições registradas para o dia informado
+      const meals = await Meals.findAll({
+        where: { dia: dataFormatadaIso }
+      });
+  
+      // Cria conjuntos para cada tipo de refeição, armazenando os IDs dos usuários aprovados
+      const arranchadosMap = {
+        cafe: new Set(),
+        almoco: new Set(),
+        janta: new Set()
+      };
+  
+      meals.forEach(meal => {
+        const tipo = meal.tipo_refeicao.toLowerCase();
+        if (arranchadosMap[tipo]) {
+          arranchadosMap[tipo].add(meal.user_id);
+        }
+      });
+  
+      // Para cada refeição, filtra os usuários do grupo que estão aprovados
+      const arranchadosCafe = usuarios.filter(u => arranchadosMap.cafe.has(u.id)).map(u => u.nome_pg);
+      const arranchadosAlmoco = usuarios.filter(u => arranchadosMap.almoco.has(u.id)).map(u => u.nome_pg);
+      const arranchadosJanta = usuarios.filter(u => arranchadosMap.janta.has(u.id)).map(u => u.nome_pg);
+  
+      // Cria um novo workbook e adiciona uma worksheet
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Arranchados');
+
+      // Adiciona a imagem ao workbook
+    const imageId = workbook.addImage({
+      filename: path.join(__dirname, 'public', 'img', 'Simbolo_3a_Cia_Com_Bld2.png'),
+      extension: 'png'
+    });
+
+      // Insere a imagem no lado esquerdo do título (posição: col 0.1, row 0.1; ajuste conforme necessário)
+      worksheet.addImage(imageId, {
+        tl: { col: 0.1, row: 0.1 },
+        ext: { width: 50, height: 50 }
+      });
+      // Insere a imagem no lado direito do título (supondo que o título esteja mesclado de A1 até F1, a posição de F1 é col 5)
+      worksheet.addImage(imageId, {
+        tl: { col: 8.1, row: 0.1 },
+        ext: { width: 50, height: 50 }
+      });
+  
+      // Linha 1: Título - mescla de A1 até F1
+      worksheet.mergeCells('B1:H1');
+      const titleCell = worksheet.getCell('B1');
+      titleCell.value = `Arranchamento para ${dataFormatadaDisplay}`;
+      titleCell.font = { bold: true, size: 18 };
+      titleCell.alignment = { horizontal: 'center' };
+  
+      let currentRow = 2;
+  
+      // Função auxiliar para escrever um bloco: cabeçalho e lista de nomes
+      function writeBlock(header, nomes) {
+        // Cabeçalho do bloco: mescla de A(currentRow) até D(currentRow)
+        const headerRange = `B${currentRow}:H${currentRow}`;
+        worksheet.mergeCells(headerRange);
+        worksheet.getCell(`B${currentRow}`).value = header;
+        worksheet.getCell(`B${currentRow}`).font = { bold: true, size : 16 };
+        worksheet.getCell(`B${currentRow}`).alignment = { horizontal: 'center' };
+        currentRow++;
+        // Preenche as linhas com os nomes, um nome por linha na coluna A
+        nomes.forEach(nome => {
+          worksheet.getCell(`B${currentRow}`).value = nome;
+          currentRow++;
+        });
+      }
+  
+      // Escreve o bloco para "Café"
+      writeBlock("Café", arranchadosCafe);
+      // Escreve o bloco para "Almoço"
+      writeBlock("Almoço", arranchadosAlmoco);
+      // Escreve o bloco para "Janta"
+      writeBlock("Janta", arranchadosJanta);
+  
+      // Configura os cabeçalhos da resposta para download do arquivo Excel
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=arranchados.xlsx');
+  
+      // Escreve o workbook na resposta e finaliza
+      await workbook.xlsx.write(res);
+      res.end();
+    } catch (error) {
+      console.error("Erro ao gerar arquivo Excel:", error);
+      res.status(500).send("Erro ao gerar arquivo Excel");
+    }
+  });
+
+app.get('/aprov_dashboard_data', async (req, res) => {
+    const { data, grupo } = req.query;
+    try {
+      // //Depuração
+      // console.log("Query params recebidos:", req.query);
+      // console.log(data);
+      // console.log(grupo);
+      // Converte a data para o formato usado no banco de dados
+      const dataFormatada = moment(data, "DD/MM/YYYY").format("YYYY-MM-DD");
+      //console.log(`A data a ser buscada é: ${dataFormatada}`);
+      //console.log(`Grupo a ser buscado é: ${grupo}`);
+  
+      // Busca todos os usuários, incluindo o campo "grupo"
+      const usuarios = await User.findAll({
+        attributes: ['id', 'nome_pg', 'grupo']
+      });
+      // Busca todas as refeições para o dia informado
+      const meals = await Meals.findAll({
+        where: { dia: dataFormatada }
+      });
+      // Converte o parâmetro grupo para número
+      const grupoNum = parseInt(grupo, 10);
+            // Filtra os usuários que pertencem ao grupo informado (convertendo o grupo de cada usuário para número)
+
+      const usuariosFiltrados = usuarios.filter(u => parseInt(u.grupo, 10) === grupoNum);
+      // DEPURAÇÃO
+      //console.log("Usuários filtrados:", usuariosFiltrados.map(u => u.nome_pg));
+      // usuarios.forEach(u => {
+      //   console.log(u.nome_pg, u.grupo, typeof u.grupo);
+      // });
+
+      // Agrupa os aprovados (arranchados) por tipo de refeição para os usuários filtrados
+      const arranchados = {
+        cafe: usuariosFiltrados
+          .filter(u => meals.some(m => m.user_id === u.id && m.tipo_refeicao.toLowerCase() === 'cafe'))
+          .map(u => u.nome_pg),
+        almoco: usuariosFiltrados
+          .filter(u => meals.some(m => m.user_id === u.id && m.tipo_refeicao.toLowerCase() === 'almoco'))
+          .map(u => u.nome_pg),
+        janta: usuariosFiltrados
+          .filter(u => meals.some(m => m.user_id === u.id && m.tipo_refeicao.toLowerCase() === 'janta'))
+          .map(u => u.nome_pg)
+      };
+
+      console.log(`Os arranchados para o dia ${dataFormatada} e grupo ${grupoNum} são:`, arranchados);
+      res.json({ usuarios: usuariosFiltrados, meals, arranchados });
+      } catch (error) {
+      console.error("Erro ao buscar dados da dashboard de aprovação:", error);
+      res.status(500).json({ error: "Erro ao buscar dados", details: error.message });
+      }
+      });
+  
+app.get('/download-pdf', async (req, res) => {
+  try {
+    const { data, grupo } = req.query;
+    if (!data || !grupo) {
+      return res.status(400).send("Parâmetros 'data' e 'grupo' são obrigatórios.");
+    }
+    
+    const dataFormatadaIso = moment(data, "DD/MM/YYYY").format("YYYY-MM-DD");
+    const dataFormatadaDisplay = data;
+    console.log(`Data a ser buscada: ${dataFormatadaIso}`);
+    console.log(`Grupo a ser buscado: ${grupo}`);
+
+    const grupoNum = parseInt(grupo, 10);
+    // Busca usuários com o grupo informado
+    const usuarios = await User.findAll({
+      where: { grupo: grupoNum },
+      attributes: ['id', 'nome_pg', 'grupo']
+    });
+    //DEPURAÇÃO
+    //console.log("Usuários retornados:", usuarios.map(u => ({ nome: u.nome_pg, grupo: u.grupo })));
+    
+    // Busca todas as refeições para o dia informado
+    const meals = await Meals.findAll({
+      where: { dia: dataFormatadaIso }
+    });
+    //DEPURAÇÃO
+    //console.log("Meals retornados:", meals);
+
+    // Como a consulta já filtra os usuários por grupo, podemos usar diretamente:
+    const usuariosFiltrados = usuarios;
+    //DEPURAÇÃO
+    //console.log("Usuários filtrados:", usuariosFiltrados.map(u => u.nome_pg));
+
+    const arranchados = {
+      cafe: usuariosFiltrados.filter(u =>
+        meals.some(m => m.user_id === u.id && m.tipo_refeicao.toLowerCase().trim() === 'cafe')
+      ).map(u => u.nome_pg),
+      almoco: usuariosFiltrados.filter(u =>
+        meals.some(m => m.user_id === u.id && m.tipo_refeicao.toLowerCase().trim() === 'almoco')
+      ).map(u => u.nome_pg),
+      janta: usuariosFiltrados.filter(u =>
+        meals.some(m => m.user_id === u.id && m.tipo_refeicao.toLowerCase().trim() === 'janta')
+      ).map(u => u.nome_pg)
+    };
+
+    console.log(`Os arranchados para o dia ${dataFormatadaIso} e grupo ${grupoNum} são:`, arranchados);
+    const doc = new PDFDocument({ size: 'A4', margin: 50 });
+    doc.pipe(res); // res deve ser o objeto de resposta da rota
+    // Caminho da imagem (ajuste conforme necessário)
+    const imagePath = path.join(__dirname, 'public', 'img', 'Simbolo_3a_Cia_Com_Bld2.png');
+    const imageWidth = 50, imageHeight = 50;
+    const pageWidth = doc.page.width;
+    const margin = doc.page.margins.left; // normalmente 50
+    
+    // Insere a imagem no lado esquerdo
+    doc.image(imagePath, margin, 20, { width: imageWidth, height: imageHeight });
+    // Insere a imagem no lado direito
+    doc.image(imagePath, pageWidth - margin - imageWidth, 20, { width: imageWidth, height: imageHeight });
+    
+
+    // Insere o título centralizado com formatação
+    doc.fontSize(18)
+      .font('Helvetica-Bold')
+      .text(`Arranchamento para ${dataFormatadaDisplay}`, { align: 'center' });
+    doc.moveDown();
+
+    // Função auxiliar para escrever um bloco de informações
+    function escreverBloco(titulo, lista) {
+      doc.fontSize(16)
+        .font('Helvetica-Bold')
+        .text(titulo, { underline: true });
+      doc.moveDown(0.5);
+      doc.fontSize(12)
+        .font('Helvetica');
+      if (lista.length === 0) {
+        doc.text("Nenhum arranchado");
+      } else {
+        lista.forEach(nome => {
+          doc.text(nome);
+        });
+      }
+      doc.moveDown();
+    }
+
+    // Escreve os blocos para cada refeição
+    escreverBloco("Café", arranchados.cafe);
+    escreverBloco("Almoço", arranchados.almoco);
+    escreverBloco("Janta", arranchados.janta);
+
+    // Finaliza o documento
+    doc.end();
+  } catch (error) {
+    console.error("Erro ao gerar PDF:", error);
+    res.status(500).send("Erro ao gerar PDF");
+  }
+});
+
+
 
 app.listen(port, () => {
 	console.log(`Servidor na porta ${port}`)
