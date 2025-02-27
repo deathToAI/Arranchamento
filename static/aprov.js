@@ -1,9 +1,9 @@
 function gerarListaDeDatas() {
     const datas = [];
     const hoje = new Date();
-    hoje.setDate(hoje.getDate() + 2);
+    hoje.setDate(hoje.getDate());
 
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 10; i++) {
         const dia = String(hoje.getDate()).padStart(2, '0');
         const mes = String(hoje.getMonth() + 1).padStart(2, '0');
         const ano = hoje.getFullYear();
@@ -126,23 +126,56 @@ function buscarDadosAprov() {
       console.error("Erro ao gerar relatório:", error);
     }
   }
+
+  async function gerarPDF() {
+    // Obtém os valores dos dropdowns
+    const dataSelecionada = document.getElementById("data-dropdown").value;
+    const grupoSelecionado = document.getElementById("grupo-dropdown").value;
   
+    // Constrói a URL para a rota de download de PDF
+    const url = `/download-pdf?data=${encodeURIComponent(dataSelecionada)}&grupo=${encodeURIComponent(grupoSelecionado)}`;
+    
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Erro ao gerar PDF: ${response.status}`);
+      }
+      const blob = await response.blob();
+      
+      // Cria um link temporário e simula o clique para download
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = `arranchados_${dataSelecionada}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+    }
+  }
+
+
   document.addEventListener("DOMContentLoaded", () => {
+    // Preenche os dropdowns e atualiza a tabela (se necessário)
+    preencherDropdowns();
+    buscarDadosAprov();
+  
+    // Vincula o evento de mudança dos dropdowns para atualizar a tabela
+    document.getElementById("data-dropdown").addEventListener("change", buscarDadosAprov);
+    document.getElementById("grupo-dropdown").addEventListener("change", buscarDadosAprov);
+  
+    // Vincula o evento de clique ao botão de relatório (gerarRelatorio)
     const btn = document.getElementById("gerarRelatorio");
     if (btn) {
       btn.addEventListener("click", gerarRelatorio);
     }
+
+    const btnPDF = document.getElementById("gerarPDF");
+    if (btnPDF) {
+      btnPDF.addEventListener("click", gerarPDF);
+    }
+
   });
   
-  
-
-
- 
-  
-
-document.addEventListener("DOMContentLoaded", () => {
-    preencherDropdowns();
-    buscarDadosAprov();
-    document.getElementById("data-dropdown").addEventListener("change", buscarDadosAprov);
-    document.getElementById("grupo-dropdown").addEventListener("change", buscarDadosAprov);
-});

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arranchamento - Aprovação</title>
+  <title>Arranchamento - Aprovisionador</title>
   <link rel="stylesheet" href="/static/styles.css">
   <!-- Inclua seu script específico para esta página, se necessário -->
   <script src="/static/aprov.js" defer></script>
@@ -13,24 +13,24 @@
   <div id="logout-div">
     <button id="logout" type="button">Logout</button>
   </div>
-  <h1>Sistema de Arranchamento 3ª Cia Com Bld - Aprovação</h1>
+  <h1>Sistema de Arranchamento 3ª Cia Com Bld - Aprovisionador</h1>
   <br><br>
   <div class="dashboard-content">
 
-    <h2 id="welcome-message">Bem-vindo!</h2>
+    <h2 id="welcome-message">Bem-vindo! - Perfil Aprovisionador</h2>
 
     <label for="data-dropdown">Selecione a Data:</label>
-    <select id="data-dropdown"></select>
+    <select class="sel-dropdown" id="data-dropdown"></select>
 
     <label for="grupo-dropdown">Selecione o Grupo:</label>
-    <select id="grupo-dropdown">
+    <select class="sel-dropdown" id="grupo-dropdown">
       <option value="1">Of / St/ Sgt</option>
       <option value="2">Cb / Sd</option>
       <option value="3">Recrutas</option>
     </select>
 
 
-    <h3>Lista de Aprovações</h3>
+    <h3>Lista de Arranchados</h3>
     <table border="1">
       <thead>
         <tr>
@@ -43,7 +43,8 @@
     </table>
 
     <br>
-<button id="gerarRelatorio" type="button" onclick="gerarRelatorio()">Gerar Relatório</button>
+<button class="botao-furriel" id="gerarRelatorio" type="button" >Gerar Relatório(Excel)</button>
+<button class="botao-furriel" id="gerarPDF" type="button">Gerar PDF</button>
   </div>
 </body>
 </html>

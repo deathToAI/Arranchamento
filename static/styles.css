@@ -265,3 +265,69 @@ th {
     padding: 6px 12px;
   }
 }
+
+.sel-dropdown {
+  /* Remove o estilo padrão */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  
+  /* Estilo base */
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 18px;
+  color: #333;
+  
+  /* Adiciona uma seta customizada (SVG inline) */
+  background-image: url("data:image/svg+xml;utf8,<svg fill='none' stroke='%23333' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M6 9l6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+}
+
+/* Foco no select */
+.sel-dropdown:focus {
+  border-color: #66afe9;
+  outline: none;
+  box-shadow: 0 0 5px rgba(102, 175, 233, 0.6);
+}
+
+.marc-desmarc {
+  display: inline-block;
+  background-color: #007e2c;
+  color: white;
+  font-size: 18px; /* Aumentado de 16px */
+  padding: 12px 30px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600; /* Aumentado de 500 */
+  margin: 10px auto; /* Centraliza horizontalmente com espaçamento vertical igual */
+  position: relative;
+  overflow: hidden;
+}
+
+.botao-furriel {
+  display: inline-block;
+  background-color: #1a472a;
+  color: white;
+  font-size: 18px; /* Aumentado de 16px */
+  padding: 12px 30px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600; /* Aumentado de 500 */
+  margin: 10px auto; /* Centraliza horizontalmente com espaçamento vertical igual */
+  position: relative;
+  overflow: hidden;
+}

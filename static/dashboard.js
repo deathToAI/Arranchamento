@@ -94,6 +94,8 @@ fetch('/dashboard-data')
         .then(data => {
             const welcomeMessage = document.getElementById('welcome-message');
             welcomeMessage.textContent = `Bem-vindo, ${data.username}!`;
+            const title = document.getElementById('title');
+            title.textContent = `Arranchamento - ${data.username}`
             // Armazenar o ID do usuário para usá-lo no arranchamento
             const usuarioId = data.user_id;
             //console.log(`usuarioId:${usuarioId}`);
