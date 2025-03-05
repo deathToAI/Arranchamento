@@ -6,7 +6,8 @@ const { Sequelize } = require('sequelize');
 // Aqui, estamos usando o SQLite como banco de dados.
 const sequelize = new Sequelize({
   dialect: 'sqlite', // Define o tipo de banco de dados (neste caso, SQLite)
-  storage: './database.sqlite' // Define o caminho do arquivo onde o banco de dados SQLite será armazenado.
+  storage: './database.sqlite', // Define o caminho do arquivo onde o banco de dados SQLite será armazenado.
+  logging: false // Opcional: reduz mensagens de log do Sequelize
   // No SQLite, o banco de dados é armazenado em um único arquivo no sistema de arquivos.
 });
 

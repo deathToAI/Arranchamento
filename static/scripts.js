@@ -52,7 +52,7 @@ function logout() {
         return response.json();
       })
       .then(data => {
-        console.log("Logout realizado:", data);
+        //console.log("Logout realizado:", data);
         window.location.href = '/';
       })
       .catch(error => console.error("Erro ao realizar logout:", error));

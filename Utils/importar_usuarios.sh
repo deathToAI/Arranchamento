@@ -28,7 +28,7 @@
 INPUT_FILE="usuarios.csv"
 OUTPUT_FILE="usuarios_cripto.csv"
 CRIPTO_SCRIPT="cripto.js"
-DB_FILE="../database.sqlite"
+DB_FILE="database.sqlite"
 TABLE_NAME="Users"
 
 #########################################

@@ -1,3 +1,4 @@
+
 function gerarListaDeDatas() {
     const datas = [];
     const hoje = new Date();
@@ -28,7 +29,7 @@ function obterDiaDaSemana(dataStr) {
     const [dia, mes, ano] = dataStr.split("/");
     // Cria um objeto Date usando o formato ISO "YYYY-MM-DD"
     const dataObj = new Date(`${ano}-${mes}-${dia}`);
-    const diasDaSemana = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+    const diasDaSemana = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado","Domingo"];
     return diasDaSemana[dataObj.getDay()];
   }
   
@@ -92,6 +93,7 @@ function gerarTabela(){
 fetch('/dashboard-data')
         .then(response => response.json())
         .then(data => {
+            const username = data.username;
             const welcomeMessage = document.getElementById('welcome-message');
             welcomeMessage.textContent = `Bem-vindo, ${data.username}!`;
             const title = document.getElementById('title');
@@ -104,11 +106,47 @@ fetch('/dashboard-data')
             console.error('Erro ao carregar dados do dashboard:', error);
         });
 
+async function mudarSenha() {
+            try {
+                // Obtém os valores dos campos de entrada
+                const oldpass = document.getElementById('oldpass').value.trim();
+                const newpass = document.getElementById('newpass').value.trim();
+        
+                // Verifica se os campos estão preenchidos
+                if (!oldpass || !newpass) {
+                    alert("Todos os campos devem ser preenchidos.");
+                    return;
+                }
+                // Faz a requisição para a API de mudança de senha
+                const response = await fetch('/pass_change', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ oldpass, newpass })
+                });
+        
+                const data = await response.json();
+        
+                if (response.ok) {
+                    alert(data.message); // Exibe a mensagem de sucesso
+                } else {
+                    alert(`Erro: ${data.error}`); // Exibe a mensagem de erro
+                }
+            } catch (error) {
+                console.error("Erro ao mudar a senha:", error);
+                alert("Erro ao mudar a senha.");
+            }
+        }
+        
+
+
 function obterSelecoes(user_id) {
     fetch(`/refeicoes-usuario?user_id=${user_id}`)
         .then(response => response.json())
         .then(data => {
-            console.log("Refeições carregadas:", data.refeicoesFormatadas, "para o usuário", data.usuario);
+            //DEPURAÇÃO
+            //console.log("Refeições carregadas:", data.refeicoesFormatadas, "para o usuário", data.usuario);
 
             const tabela = document.getElementById("tabela");
             const rows = tabela.getElementsByTagName("tr");
@@ -126,8 +164,8 @@ function obterSelecoes(user_id) {
                             item.includes(',') ? item.split(',') : item
                         );
                     }
-                    
-                    console.log(`Refeições para ${dataDia}:`, refeicoes);
+                    //Depuração
+                    //console.log(`Refeições para ${dataDia}:`, refeicoes);
 
                     cells[2].getElementsByTagName("input")[0].checked = refeicoes.includes('cafe');
                     cells[3].getElementsByTagName("input")[0].checked = refeicoes.includes('almoco');
@@ -161,8 +199,8 @@ function salvarSelecoes(user_id) {
         // Apenas adiciona ao array se houver alguma refeição marcada
         selecoes.push({ dia: dataDia, tipo_refeicao });
     }
-
-    console.log("Seleções finais para envio:", selecoes);
+    //DEPURAÇÃO
+    //console.log("Seleções finais para envio:", selecoes);
 
     // Enviar os dados para o backend
     fetch('/salvar-selecoes', {
@@ -179,11 +217,12 @@ function salvarSelecoes(user_id) {
         return response.json();
     })
     .then(data => {
-        console.log("Resposta do servidor:", data);
+        //DEPURAÇÃO
+        //console.log("Resposta do servidor:", data);
         alert("Refeições atualizadas com sucesso!");
+
     })
     .catch(error => console.error("Erro ao salvar seleções:", error));
 }
-
 
 gerarTabela();
