@@ -37,8 +37,14 @@
         <p class="aviso-clicar">Não se esqueça de clicar no botão "Arranchar"</p>
         <span class="seta-direita">&#x2190;</span>
     </div>
-    <script src="../static/tabelas.js" defer></script>
-    <script>
+    <div class="login-container">
+        <h2>Mudar Senha</h2>
+        <input type="password" id="oldpass" placeholder="Senha antiga" required>
+        <input type="password" id="newpass" placeholder="Nova senha" required>
+        <button id="alterar-senha" class="botao-arranchar" onclick="mudarSenha()">Alterar Senha</button>
+       </div> 
+
+<script>
         // Carregar o nome do usuário ao acessar o dashboard
         fetch('/dashboard-data')
             .then(response => response.json())

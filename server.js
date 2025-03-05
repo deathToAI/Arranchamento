@@ -1,26 +1,23 @@
 require('dotenv').config({path:__dirname+'/sec.env'});
 const express = require('express')
 const sequelize = require('./database/database')
-const User = require('./database/Users')
-const Meals = require ('./database/meals')
+const User = require('./database/models/Users')
+const Meals = require ('./database/models/meals')
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken'); 
 const cookieParser = require('cookie-parser');
 const moment = require('moment');
-const { where, Op } = require('sequelize');
+const { where, Op, and } = require('sequelize');
 const cron = require('node-cron');
 const path = require('path');
 const app = express();
-app.use(express.static('public'));
-app.use('/static', express.static('static'));
 app.use(express.json()); // Middleware para parsear JSON
 app.use(cookieParser()); // Habilita o uso de cookies
 const ExcelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
 port = 3000 ; 
 
-
-sequelize.sync({ alter: true }).then(() => {
+sequelize.sync().then(() => {
     console.log('Banco de Dados atualizado com sucesso!');
 }).catch((error) => {
     console.error('Erro ao atualizar o banco de dados:', error);
@@ -32,9 +29,8 @@ const verifyToken = (req, res, next) => {
 
   
 	if (!token) {
-	  return res.status(403).json({ error: 'Token não fornecido' });
-	}
-  
+    return res.redirect('/'); // Se não houver token, redireciona para a página inicial	}
+  }
 	jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
 	  if (err) {
 		return res.redirect('/'); // Redireciona se o token for inválido
@@ -45,6 +41,38 @@ const verifyToken = (req, res, next) => {
 	  next(); // Passa para a próxima função (rota)
 	});
   };
+
+  app.use((req, res, next) => {
+    if (req.path.endsWith('.html')) { // Se for um arquivo HTML
+      if (!req.cookies.token) { // Se não estiver autenticado, redireciona
+        return res.redirect('/');
+      }
+  
+      jwt.verify(req.cookies.token, process.env.JWT_SECRET, (err, decoded) => {
+        if (err) {
+          return res.redirect('/'); // Se o token for inválido, bloqueia o acesso
+        }
+  
+        req.user = decoded; // Adiciona os dados do usuário à requisição
+  
+        // Bloqueia furriel de acessar aprov.html
+        if (req.path === '/aprov.html' && req.user.username.toLowerCase() !== 'aprov') {
+          return res.redirect('/');
+        }
+  
+        // Bloqueia aprov de acessar furriel_dashboard.html
+        if (req.path === '/furriel_dashboard.html' && req.user.username.toLowerCase() !== 'furriel') {
+          return res.redirect('/');
+        }
+  
+        next(); // Se passar na validação, permite o acesso ao arquivo
+      });
+    } else {
+      next(); // Se não for um arquivo HTML, continua normalmente
+    }
+  });
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/static', express.static('static'));
 
 // Rota de login
 app.post('/login', async (req, res) => {
@@ -81,6 +109,9 @@ app.post('/login', async (req, res) => {
     let redirectUrl = '/dashboard';
     if (user.username.toLowerCase() === 'furriel') {
       redirectUrl = '/furriel_dashboard';
+    }
+    else if (user.username.toLowerCase() === 'aprov'){
+      redirectUrl = '/aprov';
     }
 
 	//   console.log('Token gerado:', token); // Log para verificar o token
@@ -127,6 +158,72 @@ app.get('/dashboard', verifyToken, async (req, res) => {
 	  res.status(500).json({ error: 'Erro ao carregar os dados do usuário' });
 	}
   });
+
+app.post('/pass_change', verifyToken, async(req, res) => {
+  try {
+    const { oldpass, newpass } = req.body;
+    const token = req.cookies.token;
+          if (!token) {
+              return res.status(401).json({ error: 'Token não encontrado' });
+          }
+      // Decodifica o token para obter o usuário autenticado    
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findByPk(decoded.id);  
+      username = user.username;
+      ///DEPURAÇÃO
+      console.log = (`Mudando senha para ${username}`)
+      
+
+      if (!oldpass || !newpass) {
+        return res.status(400).json({ error: 'Todos os campos (username, oldpass, newpass) são obrigatórios' });
+      }
+      const db_user = await User.findOne({where: { username }});
+      // Verifica se a senha antiga está correta
+      const isMatch = await bcrypt.compare(oldpass, db_user.password);
+
+      if (!isMatch ){
+        console.log(`Senha antiga incorreta para o usuário: ${user.username}`);
+        return res.status(400).json({ error: 'Senha antiga incorreta' });
+      }
+      newhash = await bcrypt.hash(newpass,10);
+      await user.update({password : newhash});
+      res.json({ message: `Senha do usuário ${username} foi alterada com sucesso.` });
+
+    }catch(error){
+      console.error('Erro ao alterar a senha');
+      res.status(500).json({ error: 'Erro ao alterar a senha', details: error.message });
+    }
+});
+
+
+
+app.get('/pass_reset', async (req,res) => {
+
+
+  try {
+    const {username} = req.query
+
+    // Verifica se o parâmetro username foi enviado
+    if (!username) {
+      return res.status(400).json({ error: 'Parâmetro username é obrigatório' });
+    }
+    	  // Busque o usuário no banco de dados
+	  const user = await User.findOne({where: { username }});
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+    // Reseta a senha para a mesma que o username
+    const hash = await bcrypt.hash(username,10);
+    await usuario.update({ password: hash });
+
+    console.log(`Senha do usuário ${username} resetada com sucesso.`);
+
+    } catch (error) {
+        console.error("Erro ao alterar a senha:", error);
+        res.status(500).json({ error: 'Erro ao alterar a senha', details: error.message });
+    }
+});
+
 // Rota para fornecer os dados do dashboard
 app.get('/dashboard-data', verifyToken, async (req, res) => {
     try {
@@ -170,7 +267,8 @@ app.post('/salvar-selecoes', async (req, res) => {
     }
 
     try {
-        console.log("Refeições recebidas para salvar:", refeicoes);
+        //DEPURAÇÃO
+        //console.log("Refeições recebidas para salvar:", refeicoes);
 
         // Obtém todas as refeições já existentes do usuário no banco de dados
         const refeicoesExistentes = await Meals.findAll({
@@ -183,8 +281,8 @@ app.post('/salvar-selecoes', async (req, res) => {
             dia: moment(r.dia, "YYYY-MM-DD").format("DD/MM/YYYY"),
             tipo_refeicao: r.tipo_refeicao
         }));
-
-        console.log("Refeições já cadastradas no banco:", refeicoesNoBanco);
+        //DEPURAÇÃO
+        //console.log("Refeições já cadastradas no banco:", refeicoesNoBanco);
 
         // Refeições que o usuário selecionou no frontend
         const refeicoesSelecionadas = refeicoes.flatMap(refeicao =>
@@ -194,8 +292,8 @@ app.post('/salvar-selecoes', async (req, res) => {
                 tipo_refeicao: tipo
             }))
         );
-
-        console.log("Refeições processadas a serem mantidas:", refeicoesSelecionadas);
+        //DEPURAÇÃO
+        //console.log("Refeições processadas a serem mantidas:", refeicoesSelecionadas);
 
         // Identifica quais refeições foram desmarcadas (estavam no banco, mas não estão no frontend)
         const refeicoesParaRemover = refeicoesNoBanco.filter(refNoBanco =>
@@ -203,8 +301,8 @@ app.post('/salvar-selecoes', async (req, res) => {
                 refNoBanco.dia === refNova.dia && refNoBanco.tipo_refeicao === refNova.tipo_refeicao
             )
         );
-
-        console.log("Refeições a serem removidas:", refeicoesParaRemover);
+        //DEPURAÇAO
+        //console.log("Refeições a serem removidas:", refeicoesParaRemover);
 
         // Remove as refeições desmarcadas do banco de dados
         for (const refeicao of refeicoesParaRemover) {
@@ -277,6 +375,8 @@ app.get('/refeicoes-usuario', async (req, res) => {
 app.get ('/furriel_dashboard',verifyToken, async (req,res) =>{
 
     try{
+
+
        // Verifica se o usuário autenticado possui o username "furriel"
       if (req.user.username.toLowerCase() !== 'furriel') {
         return res.redirect('/');
@@ -290,7 +390,7 @@ app.get ('/furriel_dashboard',verifyToken, async (req,res) =>{
         const meals = await Meals.findAll();
         
         // Debug: imprime os dados no console
-        usuarios.forEach(usuario => console.log(usuario.nome_pg));
+        //usuarios.forEach(usuario => console.log(usuario.nome_pg));
         //console.log("Usuários:", usuarios); //Depuração
         //console.log("Refeições:", meals);  //Depuração
 
@@ -300,6 +400,7 @@ app.get ('/furriel_dashboard',verifyToken, async (req,res) =>{
         res.status(500).send("Erro interno ao carregar usuários");
     }
 });
+
 app.get('/furriel_dashboard_data', async (req, res) => {
     const { data, refeicao } = req.query;
     try {
@@ -435,12 +536,18 @@ cron.schedule('0 0 * * *', async () => {
   }
 });
 
-app.get('/aprov',async(req,res)=>{
-  try{
-  res.sendFile(path.join(__dirname, 'public', 'aprov.html'));
-  }catch(error){
+// Corrigir a rota /aprov para retornar a página HTML correta
+app.get('/aprov', verifyToken, async (req, res) => {
+
+  try {
+    if (req.user.username.toLowerCase() !== 'aprov') {
+      return res.redirect('/');
+    }
+    res.sendFile(path.join(__dirname, 'public', 'aprov.html'));
+  } catch (error) {
     res.status(500).send("Erro ao acessar a página de aprovisionamento");
-  }});
+  }
+});
 
 app.get('/download-arranchados', async (req, res) => {
     try {
@@ -515,18 +622,27 @@ app.get('/download-arranchados', async (req, res) => {
   
       // Função auxiliar para escrever um bloco: cabeçalho e lista de nomes
       function writeBlock(header, nomes) {
-        // Cabeçalho do bloco: mescla de A(currentRow) até D(currentRow)
+        // Cabeçalho do bloco: mescla de B(currentRow) até H(currentRow)
         const headerRange = `B${currentRow}:H${currentRow}`;
         worksheet.mergeCells(headerRange);
         worksheet.getCell(`B${currentRow}`).value = header;
-        worksheet.getCell(`B${currentRow}`).font = { bold: true, size : 16 };
+        worksheet.getCell(`B${currentRow}`).font = { bold: true, size: 16 };
         worksheet.getCell(`B${currentRow}`).alignment = { horizontal: 'center' };
         currentRow++;
-        // Preenche as linhas com os nomes, um nome por linha na coluna A
-        nomes.forEach(nome => {
-          worksheet.getCell(`B${currentRow}`).value = nome;
+      
+        // Verifica se a lista está vazia
+        if (nomes.length === 0) {
+          worksheet.getCell(`B${currentRow}`).value = "Nenhum arranchado";
+          worksheet.getCell(`B${currentRow}`).font = { italic: true, color: { argb: "FF0000" } }; // Texto em itálico e vermelho
+          worksheet.getCell(`B${currentRow}`).alignment = { horizontal: 'left' };
           currentRow++;
-        });
+        } else {
+          // Preenche as linhas com os nomes, um nome por linha na coluna B
+          nomes.forEach(nome => {
+            worksheet.getCell(`B${currentRow}`).value = nome;
+            currentRow++;
+          });
+        }
       }
   
       // Escreve o bloco para "Café"
@@ -593,7 +709,7 @@ app.get('/aprov_dashboard_data', async (req, res) => {
           .map(u => u.nome_pg)
       };
 
-      console.log(`Os arranchados para o dia ${dataFormatada} e grupo ${grupoNum} são:`, arranchados);
+      //console.log(`Os arranchados para o dia ${dataFormatada} e grupo ${grupoNum} são:`, arranchados);
       res.json({ usuarios: usuariosFiltrados, meals, arranchados });
       } catch (error) {
       console.error("Erro ao buscar dados da dashboard de aprovação:", error);
@@ -610,8 +726,9 @@ app.get('/download-pdf', async (req, res) => {
     
     const dataFormatadaIso = moment(data, "DD/MM/YYYY").format("YYYY-MM-DD");
     const dataFormatadaDisplay = data;
-    console.log(`Data a ser buscada: ${dataFormatadaIso}`);
-    console.log(`Grupo a ser buscado: ${grupo}`);
+    //DEPURAÇÃO
+    //console.log(`Data a ser buscada: ${dataFormatadaIso}`);
+    //console.log(`Grupo a ser buscado: ${grupo}`);
 
     const grupoNum = parseInt(grupo, 10);
     // Busca usuários com o grupo informado
@@ -646,7 +763,7 @@ app.get('/download-pdf', async (req, res) => {
       ).map(u => u.nome_pg)
     };
 
-    console.log(`Os arranchados para o dia ${dataFormatadaIso} e grupo ${grupoNum} são:`, arranchados);
+    //console.log(`Os arranchados para o dia ${dataFormatadaIso} e grupo ${grupoNum} são:`, arranchados);
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
     doc.pipe(res); // res deve ser o objeto de resposta da rota
     // Caminho da imagem (ajuste conforme necessário)
@@ -697,8 +814,6 @@ app.get('/download-pdf', async (req, res) => {
     res.status(500).send("Erro ao gerar PDF");
   }
 });
-
-
 
 app.listen(port, () => {
 	console.log(`Servidor na porta ${port}`)

@@ -27,7 +27,7 @@ const user = sequelize.define('user', {
   },
   grupo: {           // Novo campo para o grupo
     type: DataTypes.INTEGER,
-    allowNull: true  // ou false, conforme sua necessidade
+    allowNull: true  
   }
 }, {
   timestamps: false // Impede que Sequelize tente usar `createdAt` e `updatedAt`
