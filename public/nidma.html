@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Administrador</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/nidma.js" defer></script>
+</head>
+<body>
+    <h1>Painel de Administração</h1>
+    <div class="admin-content">
+        <div class="admin-content">
+    <h2>Criar Usuário</h2>
+    <input type="text" id="novo-username" placeholder="Nome de usuário">
+    <input type="password" id="nova-senha" placeholder="Senha">
+    <button class="botao-admin" onclick="criarUsuario()">Criar Usuário</button>
+        </div>
+        <div class="admin-content">
+    <h2>Remover Usuário</h2>
+    <input type="text" id="username-remover" placeholder="Nome de usuário">
+    <button class="botao-admin" onclick="removerUsuario()">Remover Usuário</button>
+        </div>
+        <div class="admin-content">
+    <h2>Resetar Senha</h2>
+    <input type="text" id="username-resetar" placeholder="Nome de usuário">
+    <button class="botao-admin" onclick="resetarSenha()">Resetar Senha</button>
+        </div>
+        <div class="admin-content">
+    <h2>Lista de Usuários</h2>
+    <button class="botao-admin" onclick="listarUsuarios()">Atualizar Lista</button>
+    <table id="tabela-usuarios"></table>
+        </div>
+</div>
+</body>
+</html>
