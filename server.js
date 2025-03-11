@@ -3,6 +3,7 @@ const express = require('express')
 const sequelize = require('./database/database')
 const User = require('./database/models/Users')
 const Meals = require ('./database/models/meals')
+const Admin = require ('./database/models/admin')
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken'); 
 const cookieParser = require('cookie-parser');
@@ -33,6 +34,7 @@ const verifyToken = (req, res, next) => {
   }
 	jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
 	  if (err) {
+        console.error('Erro na verificação do token:', err.message);
 		return res.redirect('/'); // Redireciona se o token for inválido
 	  }
   
@@ -78,9 +80,16 @@ app.use('/static', express.static('static'));
 app.post('/login', async (req, res) => {
 	try {
 	  const { username, password } = req.body;
-  
-	  // Buscar o usuário no banco de dados
-	  const user = await User.findOne({ where: { username } });
+
+		let user = null;
+
+		// Se o usuário for "admin", busca na tabela Admin
+		if (username.toLowerCase() === 'admin') {
+			user = await Admin.findOne({ where: { username } });
+		} else {
+			// Caso contrário, busca na tabela Users
+			user = await User.findOne({ where: { username } });
+		}
 
 	  if (!user) {
 		return res.status(404).json({ error: 'Usuário não encontrado' });
@@ -102,6 +111,7 @@ app.post('/login', async (req, res) => {
 	  //Armazena o token do cliente e redireciona
 	  res.cookie('token', token, {
 		httpOnly: true,
+        //secure: process.env.NODE_ENV === 'production', // quando em produção
 		sameSite: 'Lax', // Permite o envio em navegação normal
 	  });
 
@@ -112,7 +122,9 @@ app.post('/login', async (req, res) => {
     }
     else if (user.username.toLowerCase() === 'aprov'){
       redirectUrl = '/aprov';
-    }
+    }else if (user.username.toLowerCase() === 'admin') {
+			redirectUrl = '/nidma';
+		}
 
 	//   console.log('Token gerado:', token); // Log para verificar o token
 	return res.json({ message: 'Login bem-sucedido', redirect: redirectUrl });
@@ -127,7 +139,7 @@ app.post('/logout', (req, res) => {
     return res.json({ message: 'Saindo...', redirect: '/' });
  });
 
-// Rota para fornecer dados do usuário para o dashboard
+// Rotas para fornecer dados do usuário para o dashboard
 app.get('/dashboard', verifyToken, async (req, res) => {
 	try {
 	  // O token está disponível no req.cookies.token
@@ -171,7 +183,7 @@ app.post('/pass_change', verifyToken, async(req, res) => {
       const user = await User.findByPk(decoded.id);  
       username = user.username;
       ///DEPURAÇÃO
-      console.log = (`Mudando senha para ${username}`)
+      console.log(`Mudando senha para ${username}`)
       
 
       if (!oldpass || !newpass) {
@@ -195,36 +207,6 @@ app.post('/pass_change', verifyToken, async(req, res) => {
     }
 });
 
-
-
-app.get('/pass_reset', async (req,res) => {
-
-
-  try {
-    const {username} = req.query
-
-    // Verifica se o parâmetro username foi enviado
-    if (!username) {
-      return res.status(400).json({ error: 'Parâmetro username é obrigatório' });
-    }
-    	  // Busque o usuário no banco de dados
-	  const user = await User.findOne({where: { username }});
-    if (!user) {
-      return res.status(404).json({ error: 'Usuário não encontrado' });
-    }
-    // Reseta a senha para a mesma que o username
-    const hash = await bcrypt.hash(username,10);
-    await usuario.update({ password: hash });
-
-    console.log(`Senha do usuário ${username} resetada com sucesso.`);
-
-    } catch (error) {
-        console.error("Erro ao alterar a senha:", error);
-        res.status(500).json({ error: 'Erro ao alterar a senha', details: error.message });
-    }
-});
-
-// Rota para fornecer os dados do dashboard
 app.get('/dashboard-data', verifyToken, async (req, res) => {
     try {
         const token = req.cookies.token;
@@ -372,6 +354,7 @@ app.get('/refeicoes-usuario', async (req, res) => {
     }
 });
 
+//ROTAS FURRIEL
 app.get ('/furriel_dashboard',verifyToken, async (req,res) =>{
 
     try{
@@ -512,31 +495,8 @@ app.get('/get-selecoes', async (req, res) => {
     }
 });
 
-// Agendar uma tarefa para rodar todos os dias à meia-noite
-//No caso apaga todas entradas anteriores a 'n' dias para fins de preservação do BD
-cron.schedule('0 0 * * *', async () => {
-  const n = 3;
-  try {
-    // Calcula a data limite: 'n' dias atrás (inclusive)
-    const cutoffDate = moment().subtract(n, 'days').format("YYYY-MM-DD");
-    console.log(`Executando limpeza: apagando registros com dia <= ${cutoffDate}`);
 
-    // Apaga todas as entradas cuja data seja menor ou igual à data limite
-    const deletedCount = await Meals.destroy({
-      where: {
-        dia: {
-          [Op.lte]: cutoffDate
-        }
-      }
-    });
-
-    console.log(`Limpeza concluída: ${deletedCount} registros apagados.`);
-  } catch (error) {
-    console.error("Erro ao executar limpeza de registros antigos:", error);
-  }
-});
-
-// Corrigir a rota /aprov para retornar a página HTML correta
+//ROTAS APROV
 app.get('/aprov', verifyToken, async (req, res) => {
 
   try {
@@ -814,6 +774,179 @@ app.get('/download-pdf', async (req, res) => {
     res.status(500).send("Erro ao gerar PDF");
   }
 });
+//Parte do admin
+
+app.get('/nidma', verifyToken, async (req, res) => {
+  try {
+      if (req.user.username.toLowerCase() !== 'admin') {
+          return res.redirect('/');
+      }
+      res.sendFile(path.join(__dirname, 'public', 'nidma.html'));
+  } catch (error) {
+      res.status(500).send("Erro ao acessar a página do administrador");
+  }
+});
+
+
+// Rota para obter todos os usuários
+app.get('/admin/usuarios', verifyToken, async (req, res) => {
+  try {
+      if (req.user.username.toLowerCase() !== 'admin') {
+          return res.status(403).json({ error: "Acesso negado" });
+      }
+
+      const usuarios = await User.findAll({ attributes: ['id', 'username', 'nome_pg', 'grupo'] });
+      res.json({ usuarios });
+
+  } catch (error) {
+      console.error("Erro ao buscar usuários:", error);
+      res.status(500).json({ error: "Erro ao buscar usuários", details: error.message });
+  }
+});
+
+// Rota para criar um novo usuário
+app.post('/admin/criar-usuario', verifyToken, async (req, res) => {
+  try {
+      if (req.user.username.toLowerCase() !== 'admin') {
+          return res.status(403).json({ error: "Acesso negado" });
+      }
+
+      const { username, nome_pg, grupo,senha } = req.body;
+
+       if (!username || !nome_pg || !grupo || !senha) {
+            return res.status(400).json({ error: "Todos os campos são obrigatórios." });
+        }
+      // Define o intervalo de IDs com base no grupo
+      let minId, maxId;
+      if (grupo === 1) { 
+          minId = 1; maxId = 1000;
+      } else if (grupo === 2) { 
+          minId = 1001; maxId = 1999;
+      } else if (grupo === 3) { 
+          minId = 2000; maxId = 9999;
+      } else {
+          return res.status(400).json({ error: "Grupo inválido." });
+      }
+
+      // Encontra o maior ID existente dentro do grupo
+      const maxUser = await User.findOne({
+        where: { id: { [Op.between]: [minId, maxId] } },
+        order: [['id', 'DESC']],
+    });
+
+      const usuarioExistente = await User.findOne({ where: { username } });
+
+      if (usuarioExistente) {
+          return res.status(400).json({ error: "Usuário já existe" });
+      }
+
+      // Define o próximo ID disponível
+      const novoId = maxUser ? maxUser.id + 1 : minId;
+
+      // Criptografa a senha antes de salvar
+      const senhaHash = await bcrypt.hash(senha, 10);
+
+      // Cria o novo usuário
+      const novoUsuario = await User.create({
+          id: novoId,
+          username,
+          nome_pg,
+          grupo,
+          password: senhaHash
+      });
+
+      res.json({ message: `Usuário ${username} criado com sucesso.`, id: novoId });
+  } catch (error) {
+      console.error("Erro ao criar usuário:", error);
+      res.status(500).json({ error: "Erro ao criar usuário", details: error.message });
+  }
+});
+
+// Rota para resetar senha de um usuário
+app.post('/admin/resetar-senha', verifyToken, async (req, res) => {
+  try {
+      if (req.user.username.toLowerCase() !== 'admin') {
+          return res.status(403).json({ error: "Acesso negado" });
+      }
+
+      const { username } = req.query;
+
+      if (!username) {
+          return res.status(400).json({ error: "O username é obrigatório" });
+      }
+
+      const user = await User.findOne({ where: { username } });
+
+      if (!user) {
+          return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      const hash = await bcrypt.hash(username, 10);
+      await user.update({ password: hash });
+
+      res.json({ message: `Senha do usuário ${username} foi resetada com sucesso!` });
+
+  } catch (error) {
+      console.error("Erro ao resetar senha:", error);
+      res.status(500).json({ error: "Erro ao resetar senha", details: error.message });
+  }
+});
+
+// Rota para remover um usuário
+app.delete('/admin/remover-usuario', verifyToken, async (req, res) => {
+  try {
+      if (req.user.username.toLowerCase() !== 'admin') {
+          return res.status(403).json({ error: "Acesso negado" });
+      }
+
+      const { id } = req.query;
+
+      if (!id) {
+          return res.status(400).json({ error: "O ID do usuário é obrigatório" });
+      }
+
+      const user = await User.findByPk(id);
+
+      if (!user) {
+          return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      await user.destroy();
+
+      res.json({ message: `Usuário ${user.username} foi removido com sucesso!` });
+
+  } catch (error) {
+      console.error("Erro ao remover usuário:", error);
+      res.status(500).json({ error: "Erro ao remover usuário", details: error.message });
+  }
+});
+
+// Agendar uma tarefa para rodar todos os dias à meia-noite
+//No caso apaga todas entradas anteriores a 'n' dias para fins de preservação do BD
+cron.schedule('0 0 * * *', async () => {
+  const n = 3;
+  try {
+    // Calcula a data limite: 'n' dias atrás (inclusive)
+    const cutoffDate = moment().subtract(n, 'days').format("YYYY-MM-DD");
+    console.log(`Executando limpeza: apagando registros com dia <= ${cutoffDate}`);
+
+    // Apaga todas as entradas cuja data seja menor ou igual à data limite
+    const deletedCount = await Meals.destroy({
+      where: {
+        dia: {
+          [Op.lte]: cutoffDate
+        }
+      }
+    });
+
+    console.log(`Limpeza concluída: ${deletedCount} registros apagados.`);
+  } catch (error) {
+    console.error("Erro ao executar limpeza de registros antigos:", error);
+  }
+});
+
+
+
 
 app.listen(port, () => {
 	console.log(`Servidor na porta ${port}`)
