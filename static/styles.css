@@ -1,3 +1,4 @@
+/* Configuração global do corpo da página com gradiente verde */
 body {
   align-items: center;
   font-family: "Roboto", sans-serif;
@@ -15,46 +16,83 @@ h1 {
   color: #ffffff;
 }
 
+/* Container principal da tela de login */
 .login-container {
-  background-color: rgba(255, 255, 255, 0.95);
-  padding: 20px;
-  border-radius: 20px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-  width: 320px;
+  background-color: rgba(255, 255, 255, 0.97);
+  padding: 40px;
+  border-radius: 25px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+  width: 400px;
   text-align: center;
-  backdrop-filter: blur(10px);
-  transition: transform 0.3s ease;
-  margin: 10px auto;
+  backdrop-filter: blur(15px);
+  transition: all 0.4s ease;
+  margin: 20px auto;
   transform-origin: center center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .login-container:hover {
-  transform: translateY(-3px);
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
 .login-container h1 {
-  margin-bottom: 15px;
+  margin: 0;
+  padding: 0;
   color: #1a472a;
-  font-weight: 600;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: center;
+}
+
+/* Container do cabeçalho com logo e título */
+.login-container .header-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.login-container .header-logo {
+  width: 50px;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Estilo do título principal do sistema */
+.titulo-principal {
+  font-size: 0.8em;
+  letter-spacing: 1px;
+}
+
+/* Estilo do subtítulo do sistema */
+.titulo-secundario {
+  font-size: 0.8em;
+  letter-spacing: 0.5px;
 }
 
 .login-container input[type="text"],
 .login-container input[type="password"] {
   width: 100%;
-  padding: 10px 15px;
-  margin: 8px 0;
+  padding: 15px 20px;
+  margin: 12px 0;
   border: 2px solid #e0e0e0;
-  border-radius: 10px;
+  border-radius: 12px;
   box-sizing: border-box;
   transition: all 0.3s ease;
   font-size: 16px;
+  background-color: rgba(255, 255, 255, 0.9);
 }
 
 .login-container input[type="text"]:focus,
 .login-container input[type="password"]:focus {
   border-color: #1a472a;
   outline: none;
-  box-shadow: 0 0 5px rgba(26, 71, 42, 0.2);
+  box-shadow: 0 0 10px rgba(26, 71, 42, 0.2);
+  transform: translateY(-2px);
 }
 
 .login-container input[type="submit"] {
@@ -91,6 +129,7 @@ h1 {
   text-decoration: underline;
 }
 
+/* Container principal do painel de controle */
 .dashboard-content {
   margin: 10px auto;
   padding: 20px;
@@ -107,6 +146,7 @@ h1 {
   margin-bottom: 10px;
 }
 
+/* Container para posicionamento de botões */
 .button-container {
   position: absolute;
   bottom: 20px;
@@ -114,6 +154,7 @@ h1 {
   text-align: right;
 }
 
+/* Botão principal para confirmar arranchamento */
 .botao-arranchar {
   display: inline-block;
   background-color: #1a472a;
@@ -139,6 +180,47 @@ h1 {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
+.botao-arranchar:hover {
+  background-color: hsl(224, 86%, 52%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(84, 158, 255, 0.3);
+}
+
+/* Botão de login do sistema */
+.botao-login {
+  display: inline-block;
+  background-color: #1a472a;
+  color: white;
+  font-size: 18px; /* Aumentado de 16px */
+  padding: 15px 30px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600; /* Aumentado de 500 */
+  margin: 10px auto; /* Centraliza horizontalmente com espaçamento vertical igual */
+  position: relative;
+  overflow: hidden;
+  grid-row: 2; /* Posiciona o botão na segunda linha do grid */
+  width: 100%;
+  margin-top: 25px;
+}
+
+.botao-login:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.botao-login:hover {
+  background-color: hsl(224, 86%, 52%);
+  /* transform: translateY(-2px); */
+  box-shadow: 0 8px 20px rgba(84, 158, 255, 0.3);
+}
+
+/* Estilização da tabela de arranchamento */
 table {
   width: 100%;
   border-radius: 10px;
@@ -148,6 +230,7 @@ table {
   margin: 0; /* Reset das margens */
 }
 
+/* Estilização das células da tabela */
 th,
 td {
   padding: 8px 15px;
@@ -161,6 +244,7 @@ th {
   color: white;
 }
 
+/* Posicionamento do container de logout */
 #logout-div {
   margin-top: 10px;
   width: 100%;
@@ -170,6 +254,7 @@ th {
   box-sizing: border-box;
 }
 
+/* Botão de logout do sistema */
 .botao-logout {
   font-size: 16px;
   padding: 12px 25px;
@@ -199,6 +284,7 @@ th {
   box-shadow: 0 2px 10px rgba(220, 53, 69, 0.2);
 }
 
+/* Container para o aviso sobre clicar no botão */
 .header-container {
   display: flex;
   align-items: center;
@@ -207,12 +293,14 @@ th {
   margin: 20px 0;
 }
 
+/* Logo do cabeçalho */
 .header-logo {
   width: 50px; /* Ajuste este valor conforme necessário */
   height: auto;
   object-fit: contain;
 }
 
+/* Container para o aviso sobre clicar no botão */
 .aviso-container {
   display: flex;
   align-items: center;
@@ -221,6 +309,7 @@ th {
   margin: 15px 0;
 }
 
+/* Estilização das setas indicativas */
 .seta-esquerda,
 .seta-direita {
   color: #dc3545;
@@ -228,6 +317,7 @@ th {
   font-weight: bold;
 }
 
+/* Estilo do texto de aviso */
 .aviso-clicar {
   color: #ffffff;
   font-weight: bold;
@@ -250,6 +340,7 @@ th {
   }
 }
 
+/* estilização do dropdown de seleção */
 @media screen and (max-height: 800px) {
   .dashboard-content {
     margin: 5px auto;
@@ -266,6 +357,7 @@ th {
   }
 }
 
+/* Estilização do dropdown de seleção */
 .sel-dropdown {
   /* Remove o estilo padrão */
   appearance: none;
@@ -294,6 +386,7 @@ th {
   box-shadow: 0 0 5px rgba(102, 175, 233, 0.6);
 }
 
+/* Botão para marcar/desmarcar todos os itens */
 .marc-desmarc {
   display: inline-block;
   background-color: #007e2c;
@@ -313,6 +406,7 @@ th {
   overflow: hidden;
 }
 
+/* Botão específico para ações do furriel */
 .botao-furriel {
   display: inline-block;
   background-color: #1a472a;
@@ -332,57 +426,3 @@ th {
   overflow: hidden;
 }
 
-
-.admin-content {
-  display:inline-grid;
-  margin: 10px auto;
-  padding: 20px;
-  width: 90%;
-  max-width: 900px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 20px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  position: relative;
-  padding-bottom: 20px;
-  display: grid;
-  grid-template-rows: auto auto auto;
-  gap: 15px;
-  margin-bottom: 10px;
-}
-
-.botao-admin {
-  display: inline-grid;
-  background-color: #1a472a;
-  color: white;
-  font-size: 18px; /* Aumentado de 16px */
-  padding: 12px 30px;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 600; /* Aumentado de 500 */
-  margin: 10px auto; /* Centraliza horizontalmente com espaçamento vertical igual */
-  position: relative;
-  overflow: hidden;
-  grid-row: 2; /* Posiciona o botão na segunda linha do grid */
-}
-
-.botao-admin:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.admin-content input[type="text"],
-.admin-content input[type="password"] {
-  width: 100%;
-  padding: 10px 15px;
-  margin: 8px 0;
-  border: 2px solid #e0e0e0;
-  border-radius: 10px;
-  box-sizing: border-box;
-  transition: all 0.3s ease;
-  font-size: 16px;
-}
