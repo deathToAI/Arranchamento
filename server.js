@@ -407,8 +407,8 @@ app.get('/furriel_dashboard_data', async (req, res) => {
           )
       ).map(usuario => usuario.nome_pg);
 
-
-      console.log(`Os usuários arranchados para o ${refeicao} em ${dataFormatada} são : ${arranchados}`);
+      //DEPURAÇÃO
+      //console.log(`Os usuários arranchados para o ${refeicao} em ${dataFormatada} são : ${arranchados}`);
       res.json({ usuarios, meals, arranchados });
     } catch (error) {
       console.error("Erro ao buscar dados da dashboard:", error);
