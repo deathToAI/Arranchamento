@@ -22,6 +22,8 @@ O sistema foi desenvolvido e testado no seguinte ambiente:
 ```sh
 cat /etc/issue
 Linux Mint 22 Wilma \n \l
+node -v
+v18.19.1
 ```
 
 ```sh
