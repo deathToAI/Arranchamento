@@ -77,12 +77,13 @@ Abra no navegador:
 http://localhost:3000
 ```
 
+## É recomendado verificar a pasta Utils para criação e importação de usuários em massa usando o shell scrip e csv lá contidos.
 ---
 
 ## 🔑 Usuários Padrão e Acesso
 
 ### 🎖️ **Usuário Administrador**
-- **Login**: `admin`
+- **Login**: `Admin`
 - **Senha**: `C@mole`
 - **Função**: Gerencia usuários, pode criar/remover usuários e redefinir senhas.
 
