@@ -34,6 +34,7 @@ const verifyToken = (req, res, next) => {
   }
 	jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
 	  if (err) {
+        console.error('Erro na verificação do token:', err.message);
 		return res.redirect('/'); // Redireciona se o token for inválido
 	  }
   
@@ -110,6 +111,7 @@ app.post('/login', async (req, res) => {
 	  //Armazena o token do cliente e redireciona
 	  res.cookie('token', token, {
 		httpOnly: true,
+        //secure: process.env.NODE_ENV === 'production', // quando em produção
 		sameSite: 'Lax', // Permite o envio em navegação normal
 	  });
 
@@ -181,7 +183,7 @@ app.post('/pass_change', verifyToken, async(req, res) => {
       const user = await User.findByPk(decoded.id);  
       username = user.username;
       ///DEPURAÇÃO
-      console.log = (`Mudando senha para ${username}`)
+      console.log(`Mudando senha para ${username}`)
       
 
       if (!oldpass || !newpass) {
@@ -809,11 +811,28 @@ app.post('/admin/criar-usuario', verifyToken, async (req, res) => {
           return res.status(403).json({ error: "Acesso negado" });
       }
 
-      const { username, nome_pg, grupo } = req.body;
+      const { username, nome_pg, grupo,senha } = req.body;
 
-      if (!username || !nome_pg || !grupo) {
-          return res.status(400).json({ error: "Todos os campos são obrigatórios" });
+       if (!username || !nome_pg || !grupo || !senha) {
+            return res.status(400).json({ error: "Todos os campos são obrigatórios." });
+        }
+      // Define o intervalo de IDs com base no grupo
+      let minId, maxId;
+      if (grupo === 1) { 
+          minId = 1; maxId = 1000;
+      } else if (grupo === 2) { 
+          minId = 1001; maxId = 1999;
+      } else if (grupo === 3) { 
+          minId = 2000; maxId = 9999;
+      } else {
+          return res.status(400).json({ error: "Grupo inválido." });
       }
+
+      // Encontra o maior ID existente dentro do grupo
+      const maxUser = await User.findOne({
+        where: { id: { [Op.between]: [minId, maxId] } },
+        order: [['id', 'DESC']],
+    });
 
       const usuarioExistente = await User.findOne({ where: { username } });
 
@@ -821,12 +840,22 @@ app.post('/admin/criar-usuario', verifyToken, async (req, res) => {
           return res.status(400).json({ error: "Usuário já existe" });
       }
 
-      const hash = await bcrypt.hash(username, 10);
+      // Define o próximo ID disponível
+      const novoId = maxUser ? maxUser.id + 1 : minId;
 
-      await User.create({ username, password: hash, nome_pg, grupo });
+      // Criptografa a senha antes de salvar
+      const senhaHash = await bcrypt.hash(senha, 10);
 
-      res.json({ message: `Usuário ${username} criado com sucesso!` });
+      // Cria o novo usuário
+      const novoUsuario = await User.create({
+          id: novoId,
+          username,
+          nome_pg,
+          grupo,
+          password: senhaHash
+      });
 
+      res.json({ message: `Usuário ${username} criado com sucesso.`, id: novoId });
   } catch (error) {
       console.error("Erro ao criar usuário:", error);
       res.status(500).json({ error: "Erro ao criar usuário", details: error.message });

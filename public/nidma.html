@@ -10,25 +10,46 @@
 <body>
     <h1>Painel de Administração</h1>
     <div class="admin-content">
-        <div class="admin-content">
+        <!-- DIV DO CRIAR USUARIO -->
+    <div class="admin-content">
     <h2>Criar Usuário</h2>
-    <input type="text" id="novo-username" placeholder="Nome de usuário">
-    <input type="password" id="nova-senha" placeholder="Senha">
+    <label for="novo-username">Nome de usuário:</label>
+    <input type="text" id="novo-username" placeholder="tenfulano">
+    
+    <label for="novo-nome_pg">Posto e Nome de Guerra:</label>
+    <input type="text" id="novo-nome_pg" placeholder="Ten Fulano">
+    
+    <label for="novo-grupo">Grupo:<br>
+        1: Usuário (Of/STen/Sgt)<br>
+        2: Usuários com papéis especiais(Furriel,Aprov,Adm)<br>
+        3: Usuarios sem login (Recrutas)<br>
+    </label>
+    <input type="text" id="grupo" placeholder="1 ou 2 ou 3">
+    
+    <label for="nova-senha">Senha:</label>
+    <input type="password" id="senha" placeholder="Senha">
+    <div>
     <button class="botao-admin" onclick="criarUsuario()">Criar Usuário</button>
-        </div>
-        <div class="admin-content">
+</div>
+    </div>
+    <!-- FIM DIV CRIAR USUARIO -->
+    <div class="admin-content">
     <h2>Remover Usuário</h2>
     <input type="text" id="username-remover" placeholder="Nome de usuário">
+    <div>
     <button class="botao-admin" onclick="removerUsuario()">Remover Usuário</button>
+</div>
         </div>
         <div class="admin-content">
     <h2>Resetar Senha</h2>
     <input type="text" id="username-resetar" placeholder="Nome de usuário">
+    <div>
     <button class="botao-admin" onclick="resetarSenha()">Resetar Senha</button>
+</div>
         </div>
         <div class="admin-content">
     <h2>Lista de Usuários</h2>
-    <button class="botao-admin" onclick="listarUsuarios()">Atualizar Lista</button>
+    <button class="botao-admin" onclick=" carregarUsuarios()">Atualizar Lista</button>
     <table id="tabela-usuarios"></table>
         </div>
 </div>

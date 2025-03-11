@@ -15,6 +15,20 @@ async function carregarUsuarios() {
         const tabela = document.getElementById('tabela-usuarios');
         tabela.innerHTML = ""; // Limpa a tabela antes de inserir os novos usuários
 
+        // Criando o cabeçalho da tabela
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+            <tr>
+                <th>ID</th>
+                <th>Usuário (username)</th>
+                <th>Nome de Guerra (nome_pg)</th>
+                <th>Grupo Militar (grupo)</th>
+                <th>Ações</th>
+            </tr>
+        `;
+        tabela.appendChild(thead);
+        //Corpo da tabela
+        const tbody = document.createElement('tbody');
         data.usuarios.forEach(user => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -23,12 +37,14 @@ async function carregarUsuarios() {
                 <td>${user.nome_pg}</td>
                 <td>${user.grupo}</td>
                 <td>
-                    <button onclick="resetarSenha('${user.username}')">Resetar Senha</button>
-                    <button onclick="removerUsuario(${user.id})">Remover</button>
+                    <button class="botao-logout" onclick="resetarSenha('${user.username}')">Resetar Senha</button>
+                    <button class="botao-logout" onclick="removerUsuario(${user.id})">Remover</button>
                 </td>
             `;
-            tabela.appendChild(tr);
+            tbody.appendChild(tr);
         });
+
+        tabela.appendChild(tbody);
     } catch (error) {
         console.error("Erro ao carregar usuários:", error);
         alert("Erro ao carregar usuários.");
@@ -39,9 +55,10 @@ async function carregarUsuarios() {
 async function criarUsuario() {
     const username = document.getElementById("novo-username").value.trim();
     const nome_pg = document.getElementById("novo-nome_pg").value.trim();
-    const grupo = document.getElementById("novo-grupo").value.trim();
+    const grupo = parseInt(document.getElementById('grupo').value, 10);
+    const senha = document.getElementById('senha').value.trim();
 
-    if (!username || !nome_pg || !grupo) {
+    if (!username || !nome_pg || !grupo || !senha) {
         alert("Todos os campos devem ser preenchidos.");
         return;
     }
@@ -50,7 +67,7 @@ async function criarUsuario() {
         const response = await fetch('/admin/criar-usuario', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, nome_pg, grupo })
+            body: JSON.stringify({ username, nome_pg, grupo, senha })
         });
 
         const data = await response.json();
