@@ -9,9 +9,9 @@
 </head>
 <body>
     <h1>Painel de Administração</h1>
-    <div class="admin-content">
+   <!-- <div class="dashboard-content"> -->
         <!-- DIV DO CRIAR USUARIO -->
-    <div class="admin-content">
+    <div class="login-container">
     <h2>Criar Usuário</h2>
     <label for="novo-username">Nome de usuário:</label>
     <input type="text" id="novo-username" placeholder="tenfulano">
@@ -29,27 +29,27 @@
     <label for="nova-senha">Senha:</label>
     <input type="password" id="senha" placeholder="Senha">
     <div>
-    <button class="botao-admin" onclick="criarUsuario()">Criar Usuário</button>
+    <button class="botao-furriel" onclick="criarUsuario()">Criar Usuário</button>
 </div>
     </div>
     <!-- FIM DIV CRIAR USUARIO -->
-    <div class="admin-content">
+    <div class="login-container">
     <h2>Remover Usuário</h2>
     <input type="text" id="username-remover" placeholder="Nome de usuário">
     <div>
-    <button class="botao-admin" onclick="removerUsuario()">Remover Usuário</button>
+    <button class="botao-furriel" onclick="removerUsuario()">Remover Usuário</button>
 </div>
         </div>
-        <div class="admin-content">
+        <div class="login-container">
     <h2>Resetar Senha</h2>
     <input type="text" id="username-resetar" placeholder="Nome de usuário">
     <div>
-    <button class="botao-admin" onclick="resetarSenha()">Resetar Senha</button>
+    <button class="botao-furriel" onclick="resetarSenha()">Resetar Senha</button>
 </div>
         </div>
-        <div class="admin-content">
+        <div class="dashboard-content">
     <h2>Lista de Usuários</h2>
-    <button class="botao-admin" onclick=" carregarUsuarios()">Atualizar Lista</button>
+    <button class="botao-furriel" onclick=" carregarUsuarios()">Atualizar Lista</button>
     <table id="tabela-usuarios"></table>
         </div>
 </div>
