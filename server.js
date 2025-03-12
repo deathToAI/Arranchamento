@@ -579,6 +579,8 @@ app.get('/download-arranchados', async (req, res) => {
       titleCell.alignment = { horizontal: 'center' };
   
       let currentRow = 2;
+      let totalArranchados = 0; // Contador geral
+
   
       // Função auxiliar para escrever um bloco: cabeçalho e lista de nomes
       function writeBlock(header, nomes) {
@@ -588,6 +590,7 @@ app.get('/download-arranchados', async (req, res) => {
         worksheet.getCell(`B${currentRow}`).value = header;
         worksheet.getCell(`B${currentRow}`).font = { bold: true, size: 16 };
         worksheet.getCell(`B${currentRow}`).alignment = { horizontal: 'center' };
+        worksheet.getCell(`I${currentRow}`).value = nomes.length; // Total de arranchados para essa refeição
         currentRow++;
       
         // Verifica se a lista está vazia
@@ -595,6 +598,7 @@ app.get('/download-arranchados', async (req, res) => {
           worksheet.getCell(`B${currentRow}`).value = "Nenhum arranchado";
           worksheet.getCell(`B${currentRow}`).font = { italic: true, color: { argb: "FF0000" } }; // Texto em itálico e vermelho
           worksheet.getCell(`B${currentRow}`).alignment = { horizontal: 'left' };
+          worksheet.getCell(`I${currentRow}`).value = 0; // Nenhum arranchado = 0
           currentRow++;
         } else {
           // Preenche as linhas com os nomes, um nome por linha na coluna B
@@ -611,6 +615,14 @@ app.get('/download-arranchados', async (req, res) => {
       writeBlock("Almoço", arranchadosAlmoco);
       // Escreve o bloco para "Janta"
       writeBlock("Janta", arranchadosJanta);
+
+      // Adiciona linha final com TOTAL GERAL
+      worksheet.mergeCells(`B${currentRow}:H${currentRow}`);
+      worksheet.getCell(`B${currentRow}`).value = "Total Geral";
+      worksheet.getCell(`B${currentRow}`).font = { bold: true, size: 16 };
+      worksheet.getCell(`B${currentRow}`).alignment = { horizontal: 'center' };
+      worksheet.getCell(`I${currentRow}`).value = totalArranchados;
+      worksheet.getCell(`I${currentRow}`).font = { bold: true, size: 16 };
   
       // Configura os cabeçalhos da resposta para download do arquivo Excel
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -744,16 +756,23 @@ app.get('/download-pdf', async (req, res) => {
       .text(`Arranchamento para ${dataFormatadaDisplay}`, { align: 'center' });
     doc.moveDown();
 
+    let totalArranchados = 0; // Contador total de arranchados
+
     // Função auxiliar para escrever um bloco de informações
-    function escreverBloco(titulo, lista) {
+     // Função para escrever blocos de refeição
+     function escreverBloco(titulo, lista) {
+      const numArranchados = lista.length;
+      totalArranchados += numArranchados; // Adiciona ao total geral
+
       doc.fontSize(16)
         .font('Helvetica-Bold')
-        .text(titulo, { underline: true });
+        .text(`${titulo} (${numArranchados} arranchados)`, { underline: true });
+
       doc.moveDown(0.5);
-      doc.fontSize(12)
-        .font('Helvetica');
-      if (lista.length === 0) {
-        doc.text("Nenhum arranchado");
+      doc.fontSize(12).font('Helvetica');
+
+      if (numArranchados === 0) {
+        doc.text("Nenhum arranchado", { color: "red" });
       } else {
         lista.forEach(nome => {
           doc.text(nome);
@@ -766,14 +785,21 @@ app.get('/download-pdf', async (req, res) => {
     escreverBloco("Café", arranchados.cafe);
     escreverBloco("Almoço", arranchados.almoco);
     escreverBloco("Janta", arranchados.janta);
+    
+    // Linha final com TOTAL GERAL
+    doc.fontSize(18)
+    .font('Helvetica-Bold')
+    .text(`Total Geral: ${totalArranchados} arranchados`, { align: 'center' });
 
-    // Finaliza o documento
+// Finaliza o documento
     doc.end();
   } catch (error) {
     console.error("Erro ao gerar PDF:", error);
     res.status(500).send("Erro ao gerar PDF");
   }
 });
+
+
 //Parte do admin
 
 app.get('/nidma', verifyToken, async (req, res) => {
