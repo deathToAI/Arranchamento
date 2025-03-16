@@ -199,11 +199,11 @@ pm restart
 1. Iniciamos definindo os dados a serem importados nesse formato no arquivo csv
 2. Após isso verificamos o script de importação que vai junto com o repositório em /Utils/importar_usuarios.sh
 
-![image.png](Arranchamento/e8d55c96-d859-477b-8c5b-9dcfffd2cbc9.png)
+![image.png](Arranchamento_MD/e8d55c96-d859-477b-8c5b-9dcfffd2cbc9.png)
 
 1. Rodamos o script e verificamos na tabela sqlite 
 
-![image.png](Arranchamento%201a16247bc14c801fb1e2d87fa4a0b3e5/image.png)
+![image.png](Arranchamento_MD/image.png)
 
 ## ❓ Suporte
 
@@ -211,10 +211,10 @@ Caso tenha dúvidas ou precise de ajuda, abra uma **Issue** no repositório ou e
 
 ---
 
-[Manual do Usuário](Arranchamento/Manual%20do%20Usua%CC%81rio.md)
+[Manual do Usuário](Arranchamento_MD/Manual%20do%20Usua%CC%81rio.md)
 
-[Manual do Furriel](Arranchamento/Manual%20do%20Furriel.md)
+[Manual do Furriel](Arranchamento_MD/Manual%20do%20Furriel.md)
 
-[Manual do Aprov](Arranchament/Manual%20do%20Aprov.md)
+[Manual do Aprov](Arranchament_MD/Manual%20do%20Aprov.md)
 
-[Manual do Admin](Arranchamento/Manual%20do%20Admin.md)
+[Manual do Admin](Arranchamento_MD/Manual%20do%20Admin.md)
