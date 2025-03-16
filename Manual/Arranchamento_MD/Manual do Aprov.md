@@ -8,14 +8,14 @@ Ao fazer login a seguinte tela será mostrada
 4. Botão para gerar o relatório em planilha do excel para eventual edição
 5. Botão para gerar a lista de arranchamento do dia daquele grupo
 
-![image.png](Manual%20do%20Aprov%201b46247bc14c80a3890be2ce08c67643/image.png)
+![image.png](Manual%20do%20Aprov/image.png)
 
 Exemplo de PDF:
 
-![image.png](Manual%20do%20Aprov%201b46247bc14c80a3890be2ce08c67643/image%201.png)
+![image.png](Manual%20do%20Aprov/image%201.png)
 
 Exemplo de planilha:
 
-![image.png](Manual%20do%20Aprov%201b46247bc14c80a3890be2ce08c67643/image%202.png)
+![image.png](Manual%20do%20Aprov/image%202.png)
 
 Ao terminar, clicar em “**SAIR”** para fazer logout.
