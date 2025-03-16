@@ -199,7 +199,7 @@ pm restart
 1. Iniciamos definindo os dados a serem importados nesse formato no arquivo csv
 2. Após isso verificamos o script de importação que vai junto com o repositório em /Utils/importar_usuarios.sh
 
-![image.png](Arranchamento%201a16247bc14c801fb1e2d87fa4a0b3e5/e8d55c96-d859-477b-8c5b-9dcfffd2cbc9.png)
+![image.png](Arranchamento/e8d55c96-d859-477b-8c5b-9dcfffd2cbc9.png)
 
 1. Rodamos o script e verificamos na tabela sqlite 
 
@@ -211,10 +211,10 @@ Caso tenha dúvidas ou precise de ajuda, abra uma **Issue** no repositório ou e
 
 ---
 
-[Manual do Usuário](Arranchamento%201a16247bc14c801fb1e2d87fa4a0b3e5/Manual%20do%20Usua%CC%81rio%201b46247bc14c80f691d4e117187f7478.md)
+[Manual do Usuário](Arranchamento/Manual%20do%20Usua%CC%81rio.md)
 
-[Manual do Furriel](Arranchamento%201a16247bc14c801fb1e2d87fa4a0b3e5/Manual%20do%20Furriel%201b46247bc14c8016b91cc2f021fe5ad9.md)
+[Manual do Furriel](Arranchamento/Manual%20do%20Furriel.md)
 
-[Manual do Aprov](Arranchamento%201a16247bc14c801fb1e2d87fa4a0b3e5/Manual%20do%20Aprov%201b46247bc14c80a3890be2ce08c67643.md)
+[Manual do Aprov](Arranchament/Manual%20do%20Aprov.md)
 
-[Manual do Admin](Arranchamento%201a16247bc14c801fb1e2d87fa4a0b3e5/Manual%20do%20Admin%201b46247bc14c805ca087cfeb0b0b517b.md)
+[Manual do Admin](Arranchamento/Manual%20do%20Admin.md)
