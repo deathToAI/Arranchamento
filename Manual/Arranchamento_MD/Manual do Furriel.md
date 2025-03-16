@@ -7,7 +7,7 @@ Após fazer login com o usuário furriel a seguinte tela aparecerá com as opç�
 3. Refeição para a data selecionada
 4. Usuários daquele grupo que serão arranchados.
 
-![image.png](Manual%20do%20Furriel%201b46247bc14c8016b91cc2f021fe5ad9/image.png)
+![image.png](Manual%20do%20Furriel/image.png)
 
 Após selecionar, lembrar clicar em **“SALVAR”** para arranchar os usuários selecionados
 
