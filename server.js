@@ -509,20 +509,88 @@ app.get('/aprov', verifyToken, async (req, res) => {
   }
 });
 
+app.get('/aprov/dados', verifyToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.username.toLowerCase() !== 'aprov') {
+      return res.status(403).json({ error: "Acesso negado" });
+    }
+
+    // Busca o usuário autenticado no banco
+    const user = await User.findByPk(req.user.id, {
+      attributes: ['id', 'nome_pg', 'username', 'grupo']
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error("Erro ao buscar dados do usuário:", error);
+    res.status(500).json({ error: "Erro interno do servidor" });
+  }
+});
+
+app.get('/aprov_dashboard_data', async (req, res) => {
+  const { data, grupo } = req.query;
+  try {
+      const dataFormatada = moment(data, "DD/MM/YYYY").format("YYYY-MM-DD");
+
+      let grupoArray;
+      if (grupo.includes(",")) {
+          grupoArray = grupo.split(",").map(num => parseInt(num, 10));
+      } else {
+          grupoArray = [parseInt(grupo, 10)];
+      }
+
+      // Busca todos os usuários que pertencem aos grupos informados
+      const usuarios = await User.findAll({
+          where: { grupo: grupoArray }, 
+          attributes: ['id', 'nome_pg', 'grupo']
+      });
+
+      // Busca todas as refeições para o dia informado
+      const meals = await Meals.findAll({
+          where: { dia: dataFormatada }
+      });
+
+      // Agrupa os aprovados (arranchados) por tipo de refeição
+      const arranchados = {
+          cafe: usuarios.filter(u => meals.some(m => m.user_id === u.id && m.tipo_refeicao.toLowerCase() === 'cafe')).map(u => u.nome_pg),
+          almoco: usuarios.filter(u => meals.some(m => m.user_id === u.id && m.tipo_refeicao.toLowerCase() === 'almoco')).map(u => u.nome_pg),
+          janta: usuarios.filter(u => meals.some(m => m.user_id === u.id && m.tipo_refeicao.toLowerCase() === 'janta')).map(u => u.nome_pg)
+      };
+
+      res.json({ usuarios, arranchados });
+
+  } catch (error) {
+      console.error("Erro ao buscar dados da dashboard de aprovação:", error);
+      res.status(500).json({ error: "Erro ao buscar dados", details: error.message });
+  }
+});
+
 app.get('/download-arranchados', async (req, res) => {
     try {
       const { data, grupo } = req.query;
       if (!data || !grupo) {
         return res.status(400).send("Parâmetros 'data' e 'grupo' são obrigatórios.");
       }
-  
+      
       // Converte a data do parâmetro para o formato ISO (para busca) e mantém o formato para exibição.
       const dataFormatadaIso = moment(data, "DD/MM/YYYY").format("YYYY-MM-DD");
       const dataFormatadaDisplay = data; // "DD/MM/YYYY"
-  
+      let grupoArray;
+      if (grupo === "Todos") {
+          grupoArray = [1, 3]; // Se "Todos" for selecionado, busca os grupos 1 e 3
+      } else if (grupo.includes(",")) {
+          grupoArray = grupo.split(",").map(num => parseInt(num, 10));
+      } else {
+          grupoArray = [parseInt(grupo, 10)];
+      }
       // Busca os usuários que pertencem ao grupo informado
+      // Atualiza a busca de usuários para incluir os grupos corretos
       const usuarios = await User.findAll({
-        where: { grupo: parseInt(grupo, 10) },
+        where: { grupo: grupoArray },
         attributes: ['id', 'nome_pg']
       });
   
@@ -637,57 +705,6 @@ app.get('/download-arranchados', async (req, res) => {
     }
   });
 
-app.get('/aprov_dashboard_data', async (req, res) => {
-    const { data, grupo } = req.query;
-    try {
-      // //Depuração
-      // console.log("Query params recebidos:", req.query);
-      // console.log(data);
-      // console.log(grupo);
-      // Converte a data para o formato usado no banco de dados
-      const dataFormatada = moment(data, "DD/MM/YYYY").format("YYYY-MM-DD");
-      //console.log(`A data a ser buscada é: ${dataFormatada}`);
-      //console.log(`Grupo a ser buscado é: ${grupo}`);
-  
-      // Busca todos os usuários, incluindo o campo "grupo"
-      const usuarios = await User.findAll({
-        attributes: ['id', 'nome_pg', 'grupo']
-      });
-      // Busca todas as refeições para o dia informado
-      const meals = await Meals.findAll({
-        where: { dia: dataFormatada }
-      });
-      // Converte o parâmetro grupo para número
-      const grupoNum = parseInt(grupo, 10);
-            // Filtra os usuários que pertencem ao grupo informado (convertendo o grupo de cada usuário para número)
-
-      const usuariosFiltrados = usuarios.filter(u => parseInt(u.grupo, 10) === grupoNum);
-      // DEPURAÇÃO
-      //console.log("Usuários filtrados:", usuariosFiltrados.map(u => u.nome_pg));
-      // usuarios.forEach(u => {
-      //   console.log(u.nome_pg, u.grupo, typeof u.grupo);
-      // });
-
-      // Agrupa os aprovados (arranchados) por tipo de refeição para os usuários filtrados
-      const arranchados = {
-        cafe: usuariosFiltrados
-          .filter(u => meals.some(m => m.user_id === u.id && m.tipo_refeicao.toLowerCase() === 'cafe'))
-          .map(u => u.nome_pg),
-        almoco: usuariosFiltrados
-          .filter(u => meals.some(m => m.user_id === u.id && m.tipo_refeicao.toLowerCase() === 'almoco'))
-          .map(u => u.nome_pg),
-        janta: usuariosFiltrados
-          .filter(u => meals.some(m => m.user_id === u.id && m.tipo_refeicao.toLowerCase() === 'janta'))
-          .map(u => u.nome_pg)
-      };
-
-      //console.log(`Os arranchados para o dia ${dataFormatada} e grupo ${grupoNum} são:`, arranchados);
-      res.json({ usuarios: usuariosFiltrados, meals, arranchados });
-      } catch (error) {
-      console.error("Erro ao buscar dados da dashboard de aprovação:", error);
-      res.status(500).json({ error: "Erro ao buscar dados", details: error.message });
-      }
-      });
   
 app.get('/download-pdf', async (req, res) => {
   try {
@@ -703,11 +720,21 @@ app.get('/download-pdf', async (req, res) => {
     //console.log(`Grupo a ser buscado: ${grupo}`);
 
     const grupoNum = parseInt(grupo, 10);
-    // Busca usuários com o grupo informado
-    const usuarios = await User.findAll({
-      where: { grupo: grupoNum },
-      attributes: ['id', 'nome_pg', 'grupo']
-    });
+    let grupoArray;
+if (grupo === "Todos") {
+    grupoArray = [1, 3]; // Se "Todos" for selecionado, busca os grupos 1 e 3
+} else if (grupo.includes(",")) {
+    grupoArray = grupo.split(",").map(num => parseInt(num, 10));
+} else {
+    grupoArray = [parseInt(grupo, 10)];
+}
+
+// Atualiza a busca de usuários para incluir os grupos corretos
+const usuarios = await User.findAll({
+    where: { grupo: grupoArray },
+    attributes: ['id', 'nome_pg']
+});
+
     //DEPURAÇÃO
     //console.log("Usuários retornados:", usuarios.map(u => ({ nome: u.nome_pg, grupo: u.grupo })));
     
