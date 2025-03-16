@@ -13,17 +13,17 @@ Por vezes, no início pode ser necessário a criação dos usuários especiais d
 3. Grupo conforme descrito(É possível adicionar grupos conforme necessário no código fonte)
 4. Senha do usuário, que por padrão deve ser a mesma do username. Será salva criptografada com bcrypt no banco de dados.
 
-![image.png](Manual%20do%20Admin%201b46247bc14c805ca087cfeb0b0b517b/image.png)
+![image.png](Manual%20do%20Admin/image.png)
 
 ## Remoção e alteração de senha de usuário
 
 1. Remover um usuário específico, conforme está escrito. Ele será excluído da base de dados, bem como suas refeições
 2. Resetar a senha do usuário, caso o mesmo tenha esquecido. A senha padrão será seu username
 
-![image.png](Manual%20do%20Admin%201b46247bc14c805ca087cfeb0b0b517b/image%201.png)
+![image.png](Manual%20do%20Admin/image%201.png)
 
 ## Lista de usuários existentes na base de dados
 
 A lista  é exibida para eventual busca de usuários na base de dados e para fins de depuração
 
-![image.png](Manual%20do%20Admin%201b46247bc14c805ca087cfeb0b0b517b/image%202.png)
+![image.png](Manual%20do%20Admin/image%202.png)
