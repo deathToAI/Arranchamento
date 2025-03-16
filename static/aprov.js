@@ -46,42 +46,44 @@ function preencherDropdowns() {
 
 async function buscarDadosAprov() {
   const dataSelecionada = document.getElementById("data-dropdown").value;
-  const grupoSelecionado = document.getElementById("grupo-dropdown").value;
+  let grupoSelecionado = document.getElementById("grupo-dropdown").value;
 
-  try {
-    // Chama a rota /me para buscar os dados do usuário autenticado
-    const response = await fetch('/aprov');
-    if (!response.ok) {
-      throw new Error(`Erro ao buscar usuário: ${response.status}`);
-    }
-    const user = await response.json();
-    
-    console.log("Dados do usuário:", user);
-    // Se o usuário autenticado não for "aprov", redireciona
-    if (user.username.toLowerCase() !== 'aprov' ) {
-      window.location.href = '/';
-      return; // interrompe a execução
-    }
-    
-    // Atualiza a mensagem de boas-vindas
-    const welcomeElem = document.getElementById('welcome-message');
-    if (welcomeElem && user.nome_pg) {
-      welcomeElem.textContent = `Bem-vindo, ${user.nome_pg}!`;
-    }
-  } catch (error) {
-    console.error("Erro ao buscar usuário:", error);
+  // Se "Todos" for selecionado, passa "1,3"
+  if (grupoSelecionado === "Todos") {
+      grupoSelecionado = "1,3";
   }
 
+  try {
+      const response = await fetch('/aprov/dados'); // Nova rota que retorna os dados do usuário autenticado
+      if (!response.ok) {
+          throw new Error(`Erro ao buscar usuário: ${response.status}`);
+      }
+      const user = await response.json();
 
-    fetch(`/aprov_dashboard_data?data=${encodeURIComponent(dataSelecionada)}&grupo=${encodeURIComponent(grupoSelecionado)}`)
+      if (user.username.toLowerCase() !== 'aprov') {
+          window.location.href = '/';
+          return;
+      }
+
+      const welcomeElem = document.getElementById('welcome-message');
+      if (welcomeElem && user.nome_pg) {
+          welcomeElem.textContent = `Bem-vindo, ${user.nome_pg}!`;
+      }
+  } catch (error) {
+      console.error("Erro ao buscar usuário:", error);
+  }
+
+  // Atualiza a tabela com os dados dos usuários e refeições
+  fetch(`/aprov_dashboard_data?data=${encodeURIComponent(dataSelecionada)}&grupo=${encodeURIComponent(grupoSelecionado)}`)
       .then(response => response.json())
       .then(data => {
-        //console.log("Dados retornados (aprov):", data);
-        atualizarTabelaUsuarios(data.usuarios, data.arranchados);
+          atualizarTabelaUsuarios(data.usuarios, data.arranchados);
       })
       .catch(error => console.error("Erro ao carregar dados da dashboard de aprovação:", error));
+}
+
   
-    }
+
   function atualizarTabelaUsuarios(usuarios, arranchados) {
     const tbody = document.getElementById("tabela-aprov");
     tbody.innerHTML = ""; // Limpa a tabela
