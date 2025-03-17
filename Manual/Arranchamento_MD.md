@@ -15,6 +15,15 @@ O projeto não tem nenhuma finalidade comercial ou lucro de qualquer natureza po
 
 # 📜 Manual de Instalação e Uso - Sistema de Arranchamento
 
+[Manual do Usuário](Arranchamento_MD/Manual%20do%20Usua%CC%81rio.md)
+
+[Manual do Furriel](Arranchamento_MD/Manual%20do%20Furriel.md)
+
+[Manual do Aprov](Arranchamento_MD/Manual%20do%20Aprov.md)
+
+[Manual do Admin](Arranchamento_MD/Manual%20do%20Admin.md)
+
+
 ## 📌 Sobre o Projeto
 
 Este projeto é um **Sistema de Arranchamento** desenvolvido em **Node.js** utilizando **Express.js**, **Sequelize** para ORM e banco de dados **SQLite**. Ele permite gerenciar refeições para militares, incluindo funcionalidades de administração para criação, remoção de usuários e redefinição de senhas.
@@ -211,10 +220,3 @@ Caso tenha dúvidas ou precise de ajuda, abra uma **Issue** no repositório ou e
 
 ---
 
-[Manual do Usuário](Arranchamento_MD/Manual%20do%20Usua%CC%81rio.md)
-
-[Manual do Furriel](Arranchamento_MD/Manual%20do%20Furriel.md)
-
-[Manual do Aprov](Arranchamento_MD/Manual%20do%20Aprov.md)
-
-[Manual do Admin](Arranchamento_MD/Manual%20do%20Admin.md)
