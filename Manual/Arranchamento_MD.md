@@ -215,6 +215,6 @@ Caso tenha dúvidas ou precise de ajuda, abra uma **Issue** no repositório ou e
 
 [Manual do Furriel](Arranchamento_MD/Manual%20do%20Furriel.md)
 
-[Manual do Aprov](Arranchament_MD/Manual%20do%20Aprov.md)
+[Manual do Aprov](Arranchamento_MD/Manual%20do%20Aprov.md)
 
 [Manual do Admin](Arranchamento_MD/Manual%20do%20Admin.md)
