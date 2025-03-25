@@ -43,33 +43,41 @@ function preencherDropdowns() {
 }
 
 function buscarUsuariosPorRefeicao() {
-    const dataSelecionada = document.getElementById("data-dropdown").value;
-    const refeicaoSelecionada = document.getElementById("refeicao-dropdown").value;
-    const grupoSelecionado = parseInt(document.getElementById("grupo-dropdown").value, 10);
-    document.getElementById("header-refeicao").textContent = refeicaoSelecionada.toUpperCase();
-    //Depuração
-    //console.log("A refeição é:", refeicaoSelecionada);
+  const dataSelecionada = document.getElementById("data-dropdown").value;
+  const refeicaoSelecionada = document.getElementById("refeicao-dropdown").value;
+  const grupoSelecionadoRaw = document.getElementById("grupo-dropdown").value;
+  document.getElementById("header-refeicao").textContent = refeicaoSelecionada.toUpperCase();
+  let grupoSelecionado = document.getElementById("grupo-dropdown").value;
+  if (grupoSelecionado === "Todos") {
+    grupoSelecionado = "1,2,3";
+  }
 
-    fetch(`/furriel_dashboard_data?data=${dataSelecionada}&refeicao=${refeicaoSelecionada}`)
-        .then(response => response.json())
-        .then(data => {
-            console.log("Dados retornados:", data);
-            // Filtra os usuários que pertencem ao grupo selecionado
-            const usuariosFiltrados = data.usuarios.filter(u => u.grupo === grupoSelecionado);
-            
-            // Filtra os arranchados para que sejam apenas os que pertencem ao grupo selecionado
-            const arranchadosFiltrados = data.arranchados.filter(nome => {
-              const user = data.usuarios.find(u => u.nome_pg === nome);
-              return user && user.grupo === grupoSelecionado;
-            });
-            //Depuração
-            //console.log(`Usuários filtrados para o grupo ${grupoSelecionado}:`, usuariosFiltrados);
-            //console.log(`Arranchados filtrados para o grupo ${grupoSelecionado}:`, arranchadosFiltrados);
-            
-            atualizarTabelaUsuarios(usuariosFiltrados, arranchadosFiltrados);
-          })
-        .catch(error => console.error("Erro ao carregar dados da dashboard:", error));
+  fetch(`/furriel_dashboard_data?data=${dataSelecionada}&refeicao=${refeicaoSelecionada}`)
+      .then(response => response.json())
+      .then(data => {
+          console.log("Dados retornados:", data);
+
+          let usuariosFiltrados = data.usuarios;
+          let arranchadosFiltrados = data.arranchados;
+
+          if (grupoSelecionadoRaw !== "Todos") {
+              const grupoSelecionado = parseInt(grupoSelecionadoRaw, 10);
+
+              // Filtra os usuários que pertencem ao grupo selecionado
+              usuariosFiltrados = data.usuarios.filter(u => u.grupo === grupoSelecionado);
+
+              // Filtra os arranchados para que sejam apenas os que pertencem ao grupo selecionado
+              arranchadosFiltrados = data.arranchados.filter(nome => {
+                  const user = data.usuarios.find(u => u.nome_pg === nome);
+                  return user && user.grupo === grupoSelecionado;
+              });
+          }
+
+          atualizarTabelaUsuarios(usuariosFiltrados, arranchadosFiltrados);
+      })
+      .catch(error => console.error("Erro ao carregar dados da dashboard:", error));
 }
+
 
 function atualizarTabelaUsuarios(usuarios, arranchados) {
     const tbody = document.getElementById("tabela-arranchados");
@@ -112,68 +120,63 @@ function atualizarTabelaUsuarios(usuarios, arranchados) {
 }
 
 function salvarSelecoesMultiplos() {
-    // Obtém os valores selecionados nos dropdowns
-    const dataSelecionada = document.getElementById("data-dropdown").value;
-    const refeicaoSelecionada = document.getElementById("refeicao-dropdown").value;
-    
-    //Depuração
-    //console.log("Data selecionada:", dataSelecionada);
-    
-    //Define o grupo a ser arranchado
+  const dataSelecionada = document.getElementById("data-dropdown").value;
+  const refeicaoSelecionada = document.getElementById("refeicao-dropdown").value;
 
- 
-    // Obtem a tabela de usuários arranchados
-    const tbody = document.getElementById("tabela-arranchados");
-    const rows = tbody.getElementsByTagName("tr");
-  
-    // Array para armazenar as seleções de cada usuário
-    const selecoes = [];
-    
-    // Itera sobre cada linha da tabela
-    for (let i = 0; i < rows.length; i++) {
-      // Cada linha deve ter o atributo data-user-id definido
-      const userId = rows[i].getAttribute("data-user-id");
-      
-      // Busca o checkbox dentro da linha (supondo que há apenas um por linha)
-      const checkbox = rows[i].querySelector("input[type='checkbox']");
-      
-      // Se o checkbox estiver marcado, adiciona essa seleção ao array
-      if (checkbox && checkbox.checked) {
-        selecoes.push({
-          user_id: userId,
-          dia: dataSelecionada,
-          tipo_refeicao: refeicaoSelecionada.toLowerCase()
-        });
-      }
-    }
-    //Depuração
-    console.log("Seleções finais para envio:", selecoes);
-    
-    // Envia os dados para o backend através de uma nova rota, por exemplo, /salvar-selecoes-multiplos
-    fetch('/salvar-selecoes-multiplos', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        selecoes,
-        dia: dataSelecionada,
-        tipo_refeicao: refeicaoSelecionada
-      })
-    })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`Erro ao salvar seleções: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log("Resposta do servidor:", data);
-        alert("Arranchamento atualizado com sucesso!");
-      })
-      .catch(error => console.error("Erro ao salvar seleções:", error));
+  let grupoSelecionado = document.getElementById("grupo-dropdown").value;
+
+  // Se for "Todos", envia como string "1,2,3"
+  if (grupoSelecionado === "Todos") {
+    grupoSelecionado = "1,2,3";
   }
-  
+
+  const tbody = document.getElementById("tabela-arranchados");
+  const rows = tbody.getElementsByTagName("tr");
+
+  const selecoes = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const userId = rows[i].getAttribute("data-user-id");
+    const checkbox = rows[i].querySelector("input[type='checkbox']");
+    if (checkbox && checkbox.checked) {
+      selecoes.push({
+        user_id: userId,
+        dia: dataSelecionada,
+        tipo_refeicao: refeicaoSelecionada.toLowerCase()
+      });
+    }
+  }
+
+  console.log("Seleções finais para envio:", selecoes);
+
+  fetch('/salvar-selecoes-multiplos', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      selecoes,
+      dia: dataSelecionada,
+      tipo_refeicao: refeicaoSelecionada,
+      grupo: grupoSelecionado // pode ser string tipo "1", ou "1,2,3"
+    })
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Erro ao salvar seleções: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log("Resposta do servidor:", data);
+      alert("Arranchamento atualizado com sucesso!");
+    })
+    .catch(error => {
+      console.error("Erro ao salvar seleções:", error);
+      alert("Erro ao salvar arranchamento.");
+    });
+}
+
 function toggleSelecionarTudo() {
     const checkboxes = document.querySelectorAll('#tabela-arranchados input[type="checkbox"]');
     
@@ -191,7 +194,61 @@ function toggleSelecionarTudo() {
     });
   }
 
+async function gerarRelatorio() {
+    // Obtém os valores dos dropdowns
+    const dataSelecionada = document.getElementById("data-dropdown").value;
+    const grupoSelecionado = document.getElementById("grupo-dropdown").value;
+    // Constrói a URL para a rota de download com os parâmetros
+    const url = `/download-arranchados?data=${encodeURIComponent(dataSelecionada)}&grupo=${encodeURIComponent(grupoSelecionado)}`;
+    
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Erro ao gerar relatório: ${response.status}`);
+      }
+      const blob = await response.blob();
+      // Cria um link temporário para download e simula um clique nele
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = `Arranchados_${dataSelecionada}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error("Erro ao gerar relatório:", error);
+    }
+  }
 
+  async function gerarPDF() {
+    // Obtém os valores dos dropdowns
+    const dataSelecionada = document.getElementById("data-dropdown").value;
+    const grupoSelecionado = document.getElementById("grupo-dropdown").value;
+  
+    // Constrói a URL para a rota de download de PDF
+    const url = `/download-pdf?data=${encodeURIComponent(dataSelecionada)}&grupo=${encodeURIComponent(grupoSelecionado)}`;
+    
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Erro ao gerar PDF: ${response.status}`);
+      }
+      const blob = await response.blob();
+      
+      // Cria um link temporário e simula o clique para download
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = `arranchados_${dataSelecionada}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+    }
+  }
 document.addEventListener("DOMContentLoaded", () => {
     preencherDropdowns();
     buscarUsuariosPorRefeicao();
@@ -200,4 +257,13 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("refeicao-dropdown").addEventListener("change", buscarUsuariosPorRefeicao);
     document.getElementById("grupo-dropdown").addEventListener("change", buscarUsuariosPorRefeicao);
     document.getElementById("toggleSelecionarTudo").addEventListener("click", toggleSelecionarTudo);
+    const btn = document.getElementById("gerarRelatorio");
+    if (btn) {
+      btn.addEventListener("click", gerarRelatorio);
+    }
+
+    const btnPDF = document.getElementById("gerarPDF");
+    if (btnPDF) {
+      btnPDF.addEventListener("click", gerarPDF);
+    }
 });

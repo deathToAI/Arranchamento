@@ -71,6 +71,7 @@ echo "Iniciando a importação dos dados do CSV..."
 counter1=1
 counter2=1001
 counter3=2000
+counter4=3000
 
 # Processa o arquivo de saída, evitando que o while rode em subshell
 while IFS=',' read -r username password nome_pg grupo; do
@@ -101,6 +102,9 @@ EOF
         elif [ "$grupo" == "3" ]; then
             id=$counter3
             counter3=$((counter3+1))
+        elif [ "$grupo" == "10" ]; then
+            id=$counter4
+            counter3=$((counter4+1))
         else
             id=0  # ID inválido se grupo não for 1, 2 ou 3
         fi
@@ -114,4 +118,6 @@ EOF
     fi
 done < <(tail -n +1 "$OUTPUT_FILE")
 
+
 echo "Importação concluída!"
+echo "Lembre-se de apagar os arquivos csv com as senhas!!!"

@@ -416,58 +416,80 @@ app.get('/furriel_dashboard_data', async (req, res) => {
     }
   });
   
-app.post('/salvar-selecoes-multiplos', async (req, res) => {
+  app.post('/salvar-selecoes-multiplos', async (req, res) => {
     const { selecoes, dia, tipo_refeicao, grupo } = req.body;
-
+  
     console.log(`Dia selecionado: ${dia}`);
     console.log(`Refeição selecionada: ${tipo_refeicao}`);
-
-    // Converte a data para o formato esperado pelo banco de dados
+  
     const diaFormatado = moment(dia, "DD/MM/YYYY").format("YYYY-MM-DD");
-
-    // Se o array de seleções estiver vazio, apaga todos os registros para esse dia e refeição(Desarrancha todos)
-    if (!Array.isArray(selecoes) || selecoes.length === 0) {
-      const deletados = await Meals.destroy({
-        where: {
-          dia: diaFormatado,
-          tipo_refeicao: tipo_refeicao.toLowerCase()
-        }
-      });
-      console.log(`Registros deletados para ${diaFormatado} e ${tipo_refeicao.toLowerCase()}:`, deletados);
-      return res.json({ message: "Registros apagados para o dia e refeição especificados." });
+  
+    // 🧠 Converte grupo (string ou número) para array de inteiros
+    let grupoArray;
+    if (typeof grupo === 'string' && grupo.includes(",")) {
+      grupoArray = grupo.split(",").map(g => parseInt(g.trim(), 10));
+    } else {
+      grupoArray = [parseInt(grupo, 10)];
     }
-
-
+  
     try {
-      console.log("Seleções recebidas:", selecoes);
-    
-      // Converte as datas no formato correto e apaga os registros antes de inserir os novos
-      const diaFormatado = moment(dia, "DD/MM/YYYY").format("YYYY-MM-DD");
+      // 🗑️ Se nenhuma seleção for feita, apenas deletar do banco
+      if (!Array.isArray(selecoes) || selecoes.length === 0) {
+        const usuariosDoGrupo = await User.findAll({
+          where: { grupo: grupoArray },
+          attributes: ['id']
+        });
+  
+        const idsDoGrupo = usuariosDoGrupo.map(u => u.id);
+  
+        const deletados = await Meals.destroy({
+          where: {
+            dia: diaFormatado,
+            tipo_refeicao: tipo_refeicao.toLowerCase(),
+            user_id: idsDoGrupo
+          }
+        });
+  
+        console.log(`Registros deletados para ${diaFormatado} e ${tipo_refeicao.toLowerCase()}:`, deletados);
+        return res.json({ message: "Registros apagados para o dia e refeição especificados." });
+      }
+  
+      // 🔁 Atualizar seleções
+      const usuariosDoGrupo = await User.findAll({
+        where: { grupo: grupoArray },
+        attributes: ['id']
+      });
+  
+      const idsDoGrupo = usuariosDoGrupo.map(u => u.id);
+  
       await Meals.destroy({
         where: {
           dia: diaFormatado,
-          tipo_refeicao: tipo_refeicao.toLowerCase()
+          tipo_refeicao: tipo_refeicao.toLowerCase(),
+          user_id: idsDoGrupo
         }
       });
+  
       console.log(`Registros removidos para o dia ${diaFormatado} e refeição ${tipo_refeicao.toLowerCase()}`);
-    
-      // Insere as novas seleções enviadas
+  
       for (const sel of selecoes) {
-        const diaFormatado = moment(sel.dia, "DD/MM/YYYY").format("YYYY-MM-DD");
+        const selDiaFormatado = moment(sel.dia, "DD/MM/YYYY").format("YYYY-MM-DD");
         await Meals.create({
           user_id: sel.user_id,
-          dia: diaFormatado,
+          dia: selDiaFormatado,
           tipo_refeicao: sel.tipo_refeicao.toLowerCase()
         });
       }
-    
+  
       console.log("Seleções atualizadas com sucesso.");
       res.json({ message: "Seleções registradas com sucesso!" });
+  
     } catch (error) {
       console.error("Erro ao salvar seleções múltiplas:", error);
       res.status(500).json({ error: "Erro ao salvar seleções", details: error.message });
-    }});
-    
+    }
+  });
+  
 // Rota para obter seleções de refeições de um usuário
 app.get('/get-selecoes', async (req, res) => {
     const userId = req.query.user_id; // Obter o ID do usuário da query string
@@ -568,7 +590,7 @@ app.get('/aprov_dashboard_data', async (req, res) => {
       res.status(500).json({ error: "Erro ao buscar dados", details: error.message });
   }
 });
-
+//ROTAS RELATÓRIOS
 app.get('/download-arranchados', async (req, res) => {
     try {
       const { data, grupo } = req.query;
@@ -579,6 +601,7 @@ app.get('/download-arranchados', async (req, res) => {
       // Converte a data do parâmetro para o formato ISO (para busca) e mantém o formato para exibição.
       const dataFormatadaIso = moment(data, "DD/MM/YYYY").format("YYYY-MM-DD");
       const dataFormatadaDisplay = data; // "DD/MM/YYYY"
+
       let grupoArray;
       if (grupo === "Todos") {
           grupoArray = [1, 3]; // Se "Todos" for selecionado, busca os grupos 1 e 3
@@ -590,9 +613,22 @@ app.get('/download-arranchados', async (req, res) => {
       // Busca os usuários que pertencem ao grupo informado
       // Atualiza a busca de usuários para incluir os grupos corretos
       const usuarios = await User.findAll({
-        where: { grupo: grupoArray },
-        attributes: ['id', 'nome_pg']
+        where: { grupo: [1, 2, 3] }, // força sempre todos os grupos operacionais
+        attributes: ['id', 'nome_pg', 'grupo']
       });
+      const gruposMapeados = {
+        1: 'Oficiais',
+        2: 'ST/Sgt',
+        3: 'Cb/Sd'
+      };
+      
+      const usuariosPorGrupo = {
+        1: usuarios.filter(u => u.grupo === 1),
+        2: usuarios.filter(u => u.grupo === 2),
+        3: usuarios.filter(u => u.grupo === 3)
+      };
+      
+      
   
       // Busca todas as refeições registradas para o dia informado
       const meals = await Meals.findAll({
@@ -649,7 +685,20 @@ app.get('/download-arranchados', async (req, res) => {
       let currentRow = 2;
       let totalArranchados = 0; // Contador geral
 
-  
+      const arranchadosPorGrupo = {
+        1: { cafe: [], almoco: [], janta: [] },
+        2: { cafe: [], almoco: [], janta: [] },
+        3: { cafe: [], almoco: [], janta: [] }
+      };
+      
+      Object.entries(usuariosPorGrupo).forEach(([grupo, usuarios]) => {
+        usuarios.forEach(u => {
+          if (arranchadosMap.cafe.has(u.id)) arranchadosPorGrupo[grupo].cafe.push(u.nome_pg);
+          if (arranchadosMap.almoco.has(u.id)) arranchadosPorGrupo[grupo].almoco.push(u.nome_pg);
+          if (arranchadosMap.janta.has(u.id)) arranchadosPorGrupo[grupo].janta.push(u.nome_pg);
+        });
+      });
+      
       // Função auxiliar para escrever um bloco: cabeçalho e lista de nomes
       function writeBlock(header, nomes) {
         // Cabeçalho do bloco: mescla de B(currentRow) até H(currentRow)
@@ -677,20 +726,40 @@ app.get('/download-arranchados', async (req, res) => {
         }
       }
   
-      // Escreve o bloco para "Café"
-      writeBlock("Café", arranchadosCafe);
-      // Escreve o bloco para "Almoço"
-      writeBlock("Almoço", arranchadosAlmoco);
-      // Escreve o bloco para "Janta"
-      writeBlock("Janta", arranchadosJanta);
+      Object.entries(arranchadosPorGrupo).forEach(([grupo, refeicoes]) => {
+        const grupoNome = gruposMapeados[grupo];
+      
+        writeBlock(`${grupoNome} - Café`, refeicoes.cafe);
+        writeBlock(`${grupoNome} - Almoço`, refeicoes.almoco);
+        writeBlock(`${grupoNome} - Janta`, refeicoes.janta);
+      });
 
-      // Adiciona linha final com TOTAL GERAL
-      worksheet.mergeCells(`B${currentRow}:H${currentRow}`);
-      worksheet.getCell(`B${currentRow}`).value = "Total Geral";
-      worksheet.getCell(`B${currentRow}`).font = { bold: true, size: 16 };
-      worksheet.getCell(`B${currentRow}`).alignment = { horizontal: 'center' };
-      worksheet.getCell(`I${currentRow}`).value = totalArranchados;
-      worksheet.getCell(`I${currentRow}`).font = { bold: true, size: 16 };
+      currentRow++;
+      worksheet.getCell(`B${currentRow}`).value = "Resumo Final";
+      worksheet.getCell(`B${currentRow}`).font = { bold: true, size: 14 };
+      currentRow++;
+      
+      worksheet.getCell(`B${currentRow}`).value = "Grupo";
+      worksheet.getCell(`C${currentRow}`).value = "Café";
+      worksheet.getCell(`D${currentRow}`).value = "Almoço";
+      worksheet.getCell(`E${currentRow}`).value = "Janta";
+      worksheet.getCell(`F${currentRow}`).value = "Total";
+      worksheet.getRow(currentRow).font = { bold: true };
+      currentRow++;
+      
+      [1, 2, 3].forEach(grupo => {
+        const cafe = arranchadosPorGrupo[grupo].cafe.length;
+        const almoco = arranchadosPorGrupo[grupo].almoco.length;
+        const janta = arranchadosPorGrupo[grupo].janta.length;
+        const total = cafe + almoco + janta;
+      
+        worksheet.getCell(`B${currentRow}`).value = gruposMapeados[grupo];
+        worksheet.getCell(`C${currentRow}`).value = cafe;
+        worksheet.getCell(`D${currentRow}`).value = almoco;
+        worksheet.getCell(`E${currentRow}`).value = janta;
+        worksheet.getCell(`F${currentRow}`).value = total;
+        currentRow++;
+      });
   
       // Configura os cabeçalhos da resposta para download do arquivo Excel
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
