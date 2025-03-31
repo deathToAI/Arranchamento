@@ -743,23 +743,136 @@ app.get('/download-arranchados', async (req, res) => {
       worksheet.getCell(`C${currentRow}`).value = "Café";
       worksheet.getCell(`D${currentRow}`).value = "Almoço";
       worksheet.getCell(`E${currentRow}`).value = "Janta";
-      worksheet.getCell(`F${currentRow}`).value = "Total";
       worksheet.getRow(currentRow).font = { bold: true };
       currentRow++;
+      let totalCafe = 0;
+      let totalAlmoco = 0;
+      let totalJanta = 0;
       
       [1, 2, 3].forEach(grupo => {
         const cafe = arranchadosPorGrupo[grupo].cafe.length;
         const almoco = arranchadosPorGrupo[grupo].almoco.length;
         const janta = arranchadosPorGrupo[grupo].janta.length;
-        const total = cafe + almoco + janta;
-      
+
+        totalCafe += cafe;
+        totalAlmoco += almoco;
+        totalJanta += janta;
+
         worksheet.getCell(`B${currentRow}`).value = gruposMapeados[grupo];
         worksheet.getCell(`C${currentRow}`).value = cafe;
         worksheet.getCell(`D${currentRow}`).value = almoco;
         worksheet.getCell(`E${currentRow}`).value = janta;
-        worksheet.getCell(`F${currentRow}`).value = total;
         currentRow++;
+        
+        // Linha final com totais por refeição
+        worksheet.getCell(`B${currentRow}`).value = "Total";
+        worksheet.getCell(`C${currentRow}`).value = totalCafe;
+        worksheet.getCell(`D${currentRow}`).value = totalAlmoco;
+        worksheet.getCell(`E${currentRow}`).value = totalJanta;
+        worksheet.getRow(currentRow).font = { bold: true };
+        
+        
+
       });
+      // Criação da segunda planilha: "Etapas"
+      let sheetEtapas = workbook.getWorksheet('Etapas');
+      if (!sheetEtapas) {
+        sheetEtapas = workbook.addWorksheet('Etapas');
+      }
+
+      const dataHojeFormatada = moment().format("DD/MM/YYYY");
+
+      // Cabeçalho superior
+      sheetEtapas.mergeCells('A1:C1');
+      sheetEtapas.getCell('A1').value = "visto";
+      sheetEtapas.getCell('A1').font = { italic: true };
+
+      sheetEtapas.mergeCells('E1:H1');
+      sheetEtapas.getCell('E1').value = "3ª Cia Com Bld";
+      sheetEtapas.getCell('E1').alignment = { horizontal: 'right' };
+
+      sheetEtapas.mergeCells('A3:D3');
+      sheetEtapas.getCell('A3').value = "NOME COMPLETO – PG";
+      sheetEtapas.mergeCells('E3:H3');
+      sheetEtapas.getCell('E3').value = "Vale Diário para o dia";
+      sheetEtapas.getCell('I3').value = moment(dataFormatadaIso).format("DD/MM/YY");
+
+      sheetEtapas.getCell('A4').value = "Fisc Adm";
+      sheetEtapas.getCell('H4').value = "Quantitativos";
+      sheetEtapas.getCell('I4').value = "quantidade";
+
+      // Linha de títulos
+      sheetEtapas.getRow(6).values = [
+        "Etapas reduzidas", "Café", "Almoço", "Jantar",
+        "etapas completas", "A alimentar", "A Alimentar OM", "soma", "Tipo", "quantidade"
+      ];
+
+      // Ajustar o total de arranchados por grupo e refeição
+      const cafePorGrupo = {};
+      const almocoPorGrupo = {};
+      const jantaPorGrupo = {};
+
+      [1, 2, 3].forEach(grupo => {
+        cafePorGrupo[grupo] = arranchadosPorGrupo[grupo].cafe.length;
+        almocoPorGrupo[grupo] = arranchadosPorGrupo[grupo].almoco.length;
+        jantaPorGrupo[grupo] = arranchadosPorGrupo[grupo].janta.length;
+      });
+
+      // Grupos: Oficiais, ST/Sgt, Cb/Sd
+      const gruposEtapas = [1, 2, 3];
+      const linhaInicio = 7;
+
+      gruposEtapas.forEach((grupo, idx) => {
+        const row = sheetEtapas.getRow(linhaInicio + idx);
+        const nomeGrupo = gruposMapeados[grupo];
+
+        row.getCell(1).value = nomeGrupo; // Etapas reduzidas
+        row.getCell(2).value = cafePorGrupo[grupo];
+        row.getCell(3).value = almocoPorGrupo[grupo];
+        row.getCell(4).value = jantaPorGrupo[grupo];
+        
+        row.getCell(5).value = nomeGrupo; // Etapas completas
+        const totalGrupo = cafePorGrupo[grupo] + almocoPorGrupo[grupo] + jantaPorGrupo[grupo];
+        row.getCell(6).value = totalGrupo;
+        row.getCell(7).value = 0; // A Alimentar OM fixo como zero
+        row.getCell(8).value = totalGrupo;
+        row.getCell(9).value = "QR";
+      });
+
+      const linhaSoma = linhaInicio + gruposEtapas.length;
+      const etapatotalCafe = [1, 2, 3].reduce((sum, g) => sum + cafePorGrupo[g], 0);
+      const etapatotalAlmoco = [1, 2, 3].reduce((sum, g) => sum + almocoPorGrupo[g], 0);
+      const etapatotalJanta = [1, 2, 3].reduce((sum, g) => sum + jantaPorGrupo[g], 0);
+      const totalAAlimentar = totalCafe + totalAlmoco + totalJanta;
+
+      sheetEtapas.getCell(`A${linhaSoma}`).value = "SOMA";
+      sheetEtapas.getCell(`B${linhaSoma}`).value = etapatotalCafe;
+      sheetEtapas.getCell(`C${linhaSoma}`).value = etapatotalAlmoco;
+      sheetEtapas.getCell(`D${linhaSoma}`).value = etapatotalJanta;
+
+      sheetEtapas.getCell(`F${linhaSoma}`).value = totalAAlimentar;
+      sheetEtapas.getCell(`G${linhaSoma}`).value = 0; // A Alimentar OM sempre 0
+      sheetEtapas.getCell(`H${linhaSoma}`).value = totalAAlimentar;
+
+      sheetEtapas.getCell(`I${linhaSoma}`).value = "CF";
+      sheetEtapas.getCell(`J${linhaSoma}`).value = totalAAlimentar;
+
+
+
+      sheetEtapas.getCell(`A${linhaSoma}`).value = "SOMA";
+      sheetEtapas.getCell(`I${linhaSoma}`).value = "CF";
+
+      // Rodapé
+      const linhaRodape = linhaSoma + 2;
+      sheetEtapas.mergeCells(`A${linhaRodape}:H${linhaRodape}`);
+      sheetEtapas.getCell(`A${linhaRodape}`).value = `Quartel em Santa Maria – RS , ${dataHojeFormatada}`;
+
+      sheetEtapas.getCell(`H${linhaRodape + 2}`).value = "_______";
+      sheetEtapas.getCell(`I${linhaRodape + 2}`).value = "Furriel";
+
+      // Estilo de títulos
+      sheetEtapas.getRow(6).font = { bold: true };
+
   
       // Configura os cabeçalhos da resposta para download do arquivo Excel
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -1066,9 +1179,6 @@ cron.schedule('0 0 * * *', async () => {
     console.error("Erro ao executar limpeza de registros antigos:", error);
   }
 });
-
-
-
 
 app.listen(port, () => {
 	console.log(`Servidor na porta ${port}`)
