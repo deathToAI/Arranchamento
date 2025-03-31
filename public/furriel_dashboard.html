@@ -19,9 +19,10 @@
         <!-- Lista de grupos -->
         <label for="grupo-dropdown">Selecione o Grupo:</label>
         <select class="sel-dropdown" id="grupo-dropdown">
-            <option value="1">Of / St/ Sgt</option>
-          <!--  <option value="2">Cb / Sd</option> -->
+            <option value="1">Of </option>
+           <option value="2">STen/ Sgt</option>
             <option value="3">Cb/Sd</option>
+            <option value="Todos">Todos</option>
         </select>
         <!-- Lista de datas -->
         <label for="data-dropdown">Selecione a data:</label>
@@ -46,11 +47,15 @@
 
         <br>
         <button class="botao-furriel" id="salvarSelecoes" type="button" onclick="salvarSelecoesMultiplos()">Salvar</button>
+        <p style="font-size: 18px;">OBS: Os relatórios geram não somente da refeição selecionada mas de todas as refeições da data selecionada.</p>
+        <button class="botao-furriel" id="gerarRelatorio" type="button" >Gerar Relatório(Excel)</button>
+        <button class="botao-furriel" id="gerarPDF" type="button">Gerar PDF</button>
     </div>
     <div class="aviso-container">
         <span class="seta-esquerda">&#x2192;</span>
         <p class="aviso-clicar">Não se esqueça de clicar no botão "SALVAR"</p>
         <span class="seta-direita">&#x2190;</span>
+
     </div>
 </body>
 </html>

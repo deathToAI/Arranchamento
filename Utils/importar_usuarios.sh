@@ -22,14 +22,14 @@
 
 ##OS GRUPOS SÃO 1: OF/STEN/SGT
 ## GRUPO 2: ADMIN
-## GRUPO 3: 
-
+## GRUPO 3: Recrutas
+#set -x
 # Arquivos e configurações
 INPUT_FILE="usuarios.csv"
 OUTPUT_FILE="usuarios_cripto.csv"
 CRIPTO_SCRIPT="cripto.js"
 DB_FILE="database.sqlite"
-TABLE_NAME="Users"
+TABLE_NAME="users"
 
 #########################################
 # Parte 1: Criptografar as senhas dos usuários
@@ -71,6 +71,7 @@ echo "Iniciando a importação dos dados do CSV..."
 counter1=1
 counter2=1001
 counter3=2000
+counter4=3000
 
 # Processa o arquivo de saída, evitando que o while rode em subshell
 while IFS=',' read -r username password nome_pg grupo; do
@@ -79,27 +80,44 @@ while IFS=',' read -r username password nome_pg grupo; do
         continue
     fi
 
-    # Define o ID com base no grupo
-    if [ "$grupo" == "1" ]; then
-        id=$counter1
-        counter1=$((counter1+1))
-    elif [ "$grupo" == "2" ]; then
-        id=$counter2
-        counter2=$((counter2+1))
-    elif [ "$grupo" == "3" ]; then
-        id=$counter3
-        counter3=$((counter3+1))
-    else
-        # Se o grupo não for 1, 2 ou 3, define um ID padrão (pode ser tratado como erro)
-        id=0
-    fi
+    # Verifica se o usuário já existe no banco de dados
+    existing_id=$(sqlite3 "$DB_FILE" "SELECT id FROM $TABLE_NAME WHERE username='$username';")
 
-    # Insere os dados no banco
-    sqlite3 "$DB_FILE" <<EOF
-INSERT INTO $TABLE_NAME (id, username, password, nome_pg, grupo) VALUES ($id, '$username', '$password', '$nome_pg', $grupo);
+    if [ -n "$existing_id" ]; then
+        # Se o usuário já existe, faz um UPDATE nos dados
+        sqlite3 "$DB_FILE" <<EOF
+UPDATE $TABLE_NAME 
+SET password = '$password', nome_pg = '$nome_pg', grupo = $grupo 
+WHERE username = '$username';
 EOF
+        echo "Usuário '$username' atualizado."
+    else
+        # Define o ID com base no grupo se for um novo usuário
+        if [ "$grupo" == "1" ]; then
+            id=$counter1
+            counter1=$((counter1+1))
+        elif [ "$grupo" == "2" ]; then
+            id=$counter2
+            counter2=$((counter2+1))
+        elif [ "$grupo" == "3" ]; then
+            id=$counter3
+            counter3=$((counter3+1))
+        elif [ "$grupo" == "10" ]; then
+            id=$counter4
+            counter3=$((counter4+1))
+        else
+            id=0  # ID inválido se grupo não for 1, 2 ou 3
+        fi
 
-    echo "Usuário '$username' inserido com ID $id."
+        # Insere os dados no banco apenas se for um novo usuário
+        sqlite3 "$DB_FILE" <<EOF
+INSERT INTO $TABLE_NAME (id, username, password, nome_pg, grupo) 
+VALUES ($id, '$username', '$password', '$nome_pg', $grupo);
+EOF
+        echo "Usuário '$username' inserido com ID $id."
+    fi
 done < <(tail -n +1 "$OUTPUT_FILE")
 
+
 echo "Importação concluída!"
+echo "Lembre-se de apagar os arquivos csv com as senhas!!!"
