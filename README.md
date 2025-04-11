@@ -34,7 +34,7 @@ uname -a
 Linux factory 6.8.0-38-generic #38-Ubuntu SMP PREEMPT_DYNAMIC Fri Jun  7 15:25:01 UTC 2024 x86_64 x86_64 x86_64 GNU/Linux
 ```
 
-## 🚀 Tecnologias Utilizadas
+##  Tecnologias Utilizadas
 - **Backend**: Node.js + Express.js
 - **Banco de Dados**: SQLite + Sequelize ORM
 - **Frontend**: HTML, CSS e JavaScript puro
