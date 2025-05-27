@@ -1,27 +1,31 @@
 
 function gerarListaDeDatas() {
     const datas = [];
-    const hoje = new Date();
-
-    // Começa do dia depois de amanhã
-    hoje.setDate(hoje.getDate() + 2); 
-    
-
-    for (let i = 0; i < 8; i++) {
-        const dia = String(hoje.getDate()).padStart(2, '0');
-        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-        const ano = hoje.getFullYear();
-        
-    
-
-        datas.push(`${dia}/${mes}/${ano}`);
-
-        // Avança para o próximo dia
-        hoje.setDate(hoje.getDate() + 1);
+    const agora = new Date();
+  
+    // Verifica a hora atual
+    const horaAtual = agora.getHours();
+    const primeiroDia = new Date();
+  
+    if (horaAtual < 12) {
+      // Antes do meio-dia: pode arranchar para amanhã (D+1)
+      primeiroDia.setDate(primeiroDia.getDate() + 1);
+    } else {
+      // Depois do meio-dia: pode arranchar apenas para D+2
+      primeiroDia.setDate(primeiroDia.getDate() + 2);
     }
-
+  
+    // Gera 8 dias a partir do primeiro dia possível
+    for (let i = 0; i < 10; i++) {
+      const dia = String(primeiroDia.getDate()).padStart(2, '0');
+      const mes = String(primeiroDia.getMonth() + 1).padStart(2, '0');
+      const ano = primeiroDia.getFullYear();
+      datas.push(`${dia}/${mes}/${ano}`);
+      primeiroDia.setDate(primeiroDia.getDate() + 1);
+    }
+  
     return datas;
-}
+  }
 
 dias = gerarListaDeDatas();
 function obterDiaDaSemana(dataStr) {

@@ -698,9 +698,20 @@ app.get('/download-arranchados', async (req, res) => {
           if (arranchadosMap.janta.has(u.id)) arranchadosPorGrupo[grupo].janta.push(u.nome_pg);
         });
       });
+
+      const signatureCell = worksheet.getCell('J1');
+      signatureCell.value = "";
+      const furrisign = worksheet.getCell('J2');
+      furrisign.value = "Furriel";
+      furrisign.font = { italic: true, size: 12 };
+      furrisign.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      signatureCell.border = {bottom: { style: 'thin' }  };
       
       // Função auxiliar para escrever um bloco: cabeçalho e lista de nomes
       function writeBlock(header, nomes) {
+
+
+
         // Cabeçalho do bloco: mescla de B(currentRow) até H(currentRow)
         const headerRange = `B${currentRow}:H${currentRow}`;
         worksheet.mergeCells(headerRange);

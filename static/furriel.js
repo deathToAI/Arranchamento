@@ -1,7 +1,7 @@
 function gerarListaDeDatas() {
     const datas = [];
     const hoje = new Date();
-    hoje.setDate(hoje.getDate() + 2);
+    hoje.setDate(hoje.getDate());
 
     for (let i = 0; i < 8; i++) {
         const dia = String(hoje.getDate()).padStart(2, '0');
@@ -57,21 +57,25 @@ function buscarUsuariosPorRefeicao() {
       .then(data => {
           console.log("Dados retornados:", data);
 
-          let usuariosFiltrados = data.usuarios;
-          let arranchadosFiltrados = data.arranchados;
+          
+      let usuariosFiltrados = [];
+      let arranchadosFiltrados = [];
 
-          if (grupoSelecionadoRaw !== "Todos") {
-              const grupoSelecionado = parseInt(grupoSelecionadoRaw, 10);
-
-              // Filtra os usuários que pertencem ao grupo selecionado
-              usuariosFiltrados = data.usuarios.filter(u => u.grupo === grupoSelecionado);
-
-              // Filtra os arranchados para que sejam apenas os que pertencem ao grupo selecionado
-              arranchadosFiltrados = data.arranchados.filter(nome => {
-                  const user = data.usuarios.find(u => u.nome_pg === nome);
-                  return user && user.grupo === grupoSelecionado;
-              });
-          }
+      if (grupoSelecionadoRaw === "Todos") {
+        // Apenas usuários dos grupos 1, 2 e 3
+        usuariosFiltrados = data.usuarios.filter(u => [1, 2, 3].includes(u.grupo));
+        arranchadosFiltrados = data.arranchados.filter(nome => {
+          const user = data.usuarios.find(u => u.nome_pg === nome);
+          return user && [1, 2, 3].includes(user.grupo);
+        });
+      } else {
+        const grupoSelecionado = parseInt(grupoSelecionadoRaw, 10);
+        usuariosFiltrados = data.usuarios.filter(u => u.grupo === grupoSelecionado);
+        arranchadosFiltrados = data.arranchados.filter(nome => {
+          const user = data.usuarios.find(u => u.nome_pg === nome);
+          return user && user.grupo === grupoSelecionado;
+        });
+      }
 
           atualizarTabelaUsuarios(usuariosFiltrados, arranchadosFiltrados);
       })
@@ -82,6 +86,8 @@ function buscarUsuariosPorRefeicao() {
 function atualizarTabelaUsuarios(usuarios, arranchados) {
     const tbody = document.getElementById("tabela-arranchados");
     tbody.innerHTML = ""; // Limpa a tabela
+
+    usuarios.sort((a, b) => a.nome_pg.localeCompare(b.nome_pg));
 
     usuarios.forEach(usuario => {
         const tr = document.createElement("tr");
