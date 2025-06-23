@@ -113,6 +113,7 @@ app.post('/login', async (req, res) => {
 		httpOnly: true,
         //secure: process.env.NODE_ENV === 'production', // quando em produção
 		sameSite: 'Lax', // Permite o envio em navegação normal
+    // secure : true, // Habilita o cookie apenas em conexões seguras (HTTPS)
 	  });
 
     // Define a URL de redirecionamento com base no username
@@ -604,7 +605,7 @@ app.get('/download-arranchados', async (req, res) => {
 
       let grupoArray;
       if (grupo === "Todos") {
-          grupoArray = [1, 3]; // Se "Todos" for selecionado, busca os grupos 1 e 3
+          grupoArray = [1,2, 3]; // Se "Todos" for selecionado, busca os grupos 1 e 3
       } else if (grupo.includes(",")) {
           grupoArray = grupo.split(",").map(num => parseInt(num, 10));
       } else {
@@ -627,9 +628,6 @@ app.get('/download-arranchados', async (req, res) => {
         2: usuarios.filter(u => u.grupo === 2),
         3: usuarios.filter(u => u.grupo === 3)
       };
-      
-      
-  
       // Busca todas as refeições registradas para o dia informado
       const meals = await Meals.findAll({
         where: { dia: dataFormatadaIso }
@@ -669,12 +667,6 @@ app.get('/download-arranchados', async (req, res) => {
         tl: { col: 0.1, row: 0.1 },
         ext: { width: 50, height: 50 }
       });
-      // Insere a imagem no lado direito do título (supondo que o título esteja mesclado de A1 até F1, a posição de F1 é col 5)
-      worksheet.addImage(imageId, {
-        tl: { col: 8.1, row: 0.1 },
-        ext: { width: 50, height: 50 }
-      });
-  
       // Linha 1: Título - mescla de A1 até F1
       worksheet.mergeCells('B1:H1');
       const titleCell = worksheet.getCell('B1');
@@ -700,17 +692,15 @@ app.get('/download-arranchados', async (req, res) => {
       });
 
       const signatureCell = worksheet.getCell('J1');
-      signatureCell.value = "";
+      signatureCell.value = "___________";
       const furrisign = worksheet.getCell('J2');
       furrisign.value = "Furriel";
       furrisign.font = { italic: true, size: 12 };
       furrisign.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-      signatureCell.border = {bottom: { style: 'thin' }  };
+      signatureCell.font = {underline: true}
       
       // Função auxiliar para escrever um bloco: cabeçalho e lista de nomes
       function writeBlock(header, nomes) {
-
-
 
         // Cabeçalho do bloco: mescla de B(currentRow) até H(currentRow)
         const headerRange = `B${currentRow}:H${currentRow}`;
@@ -739,14 +729,14 @@ app.get('/download-arranchados', async (req, res) => {
   
       Object.entries(arranchadosPorGrupo).forEach(([grupo, refeicoes]) => {
         const grupoNome = gruposMapeados[grupo];
-      
+        //Chama a função writeBlock
         writeBlock(`${grupoNome} - Café`, refeicoes.cafe);
         writeBlock(`${grupoNome} - Almoço`, refeicoes.almoco);
         writeBlock(`${grupoNome} - Janta`, refeicoes.janta);
       });
 
       currentRow++;
-      worksheet.getCell(`B${currentRow}`).value = "Resumo Final";
+      worksheet.getCell(`B${currentRow}`).value = "TOTAL";
       worksheet.getCell(`B${currentRow}`).font = { bold: true, size: 14 };
       currentRow++;
       
@@ -803,12 +793,12 @@ app.get('/download-arranchados', async (req, res) => {
       sheetEtapas.getCell('E1').alignment = { horizontal: 'right' };
 
       sheetEtapas.mergeCells('A3:D3');
-      sheetEtapas.getCell('A3').value = "NOME COMPLETO – PG";
+      sheetEtapas.getCell('A3').value = "___________";
       sheetEtapas.mergeCells('E3:H3');
       sheetEtapas.getCell('E3').value = "Vale Diário para o dia";
       sheetEtapas.getCell('I3').value = moment(dataFormatadaIso).format("DD/MM/YY");
 
-      sheetEtapas.getCell('A4').value = "Fisc Adm";
+      sheetEtapas.getCell('A4').value = "Fiscal Administrativo";
       sheetEtapas.getCell('H4').value = "Quantitativos";
       sheetEtapas.getCell('I4').value = "quantidade";
 
